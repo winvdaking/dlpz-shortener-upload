@@ -12,7 +12,7 @@ export function Navbar({ language, onToggleLanguage }) {
 
   return (
     <nav className="relative pt-4 lg:pt-6 pb-4 z-50 navbar-border">
-      <div className="navbar-container px-4 lg:px-6">
+      <div className="max-w-6xl mx-auto px-4 lg:px-6">
         <div className="flex items-center justify-between">
           {/* Logo and avatar */}
           <div className="flex items-center gap-3">

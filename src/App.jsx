@@ -1,18 +1,7 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Link,
-  Upload,
-  Zap,
-  Heart,
-  Sparkles,
-  ExternalLink,
-  Copy,
-  Check,
-} from "lucide-react";
+import { motion } from "framer-motion";
 import { Navbar } from "./components/Navbar";
-import { Input } from "./components/Input";
-import { AuroraBackground } from "./components/ui/aurora-background";
+import Hero from "./components/hero";
 
 // Translations
 const translations = {
@@ -125,18 +114,13 @@ function App() {
   const [resultUrl, setResultUrl] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-
   const [dragOver, setDragOver] = useState(false);
+
   const [language, setLanguage] = useState(() => {
     return localStorage.getItem("language") || "fr";
   });
 
   const t = translations[language];
-
-  // Initialize theme
-  useEffect(() => {
-    document.documentElement.classList.remove("dark");
-  }, []);
 
   // Save language preference
   useEffect(() => {
@@ -147,21 +131,6 @@ function App() {
   const toggleLanguage = () => {
     setLanguage(language === "fr" ? "en" : "fr");
   };
-
-  // Mouse tracking for card glow effect
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      // Update CSS custom properties for card glow effect
-      document.documentElement.style.setProperty("--mouse-x", `${e.clientX}px`);
-      document.documentElement.style.setProperty("--mouse-y", `${e.clientY}px`);
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-    };
-  }, []);
 
   // Handle URL shortening
   const handleShorten = async () => {
@@ -267,371 +236,69 @@ function App() {
   };
 
   return (
-    <AuroraBackground className="min-h-screen">
-      <div className="relative z-10 flex flex-col flex-1">
-        <Navbar language={language} onToggleLanguage={toggleLanguage} />
-        <div id="background_noisy" className="absolute inset-0 z-0" />
+    <div className="min-h-screen bg-slate-950">
+      {/* Navbar */}
 
-        <main className="flex-1 relative z-10">
-          {/* Modern Header */}
-          <div className="clean-header pt-16 pb-12">
-            <motion.h1
-              className="text-adaptive mix-blend-exclusion"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              {t.hero.title}
-            </motion.h1>
-            <motion.p
-              className="font-poppins text-muted-adaptive mix-blend-exclusion"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              {t.hero.subtitle}
-            </motion.p>
-          </div>
+      {/* Hero Section */}
+      <Hero
+        urlInput={urlInput}
+        setUrlInput={setUrlInput}
+        fileInput={fileInput}
+        setFileInput={setFileInput}
+        isLoading={isLoading}
+        resultUrl={resultUrl}
+        error={error}
+        copied={copied}
+        dragOver={dragOver}
+        handleShorten={handleShorten}
+        handleUpload={handleUpload}
+        handleDragOver={handleDragOver}
+        handleDragLeave={handleDragLeave}
+        handleDrop={handleDrop}
+        handleCopy={handleCopy}
+        t={t}
+      />
 
-          {/* Direct Interface */}
-          <div className="max-w-6xl mx-auto px-6 pb-8 relative z-10">
-            <div className="direct-interface">
-              {/* URL Shortener Section */}
-              <motion.div
-                className="interface-section"
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: 0.6 }}
-              >
-                <div className="section-header">
-                  <motion.div
-                    className="icon-container mx-auto mb-4"
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Link className="w-8 h-8" />
-                  </motion.div>
-                  <h3 className="section-title font-poppins">
-                    {t.urlShortener.title}
-                  </h3>
+      {/* Footer */}
+      <motion.footer
+        className="py-8 border-t border-white/10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 1 }}
+      >
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full border border-white/20 overflow-hidden">
+                <img
+                  src="/avatar.png"
+                  alt="Avatar"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                    e.target.nextSibling.style.display = "flex";
+                  }}
+                />
+                <div
+                  className="w-full h-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs font-bold"
+                  style={{ display: "none" }}
+                >
+                  DL
                 </div>
-
-                <div className="space-y-4">
-                  <Input
-                    type="url"
-                    placeholder={t.urlShortener.placeholder}
-                    value={urlInput}
-                    onChange={(e) => setUrlInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleShorten()}
-                    className="w-full"
-                  />
-                  <motion.button
-                    onClick={handleShorten}
-                    disabled={!urlInput.trim()}
-                    className="glass-button w-full font-poppins"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    {isLoading ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <motion.div
-                          className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full"
-                          animate={{ rotate: 360 }}
-                          transition={{
-                            duration: 1,
-                            repeat: Infinity,
-                            ease: "linear",
-                          }}
-                        />
-                        {t.urlShortener.loading}
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center gap-2">
-                        <Zap className="w-4 h-4" />
-                        {t.urlShortener.button}
-                      </div>
-                    )}
-                  </motion.button>
-
-                  {/* Example output */}
-                  <div className="mt-4 p-3 bg-white/5 rounded-lg">
-                    <div className="text-xs text-muted-adaptive mb-2">
-                      {t.urlShortener.example.title}
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-adaptive">
-                          {t.urlShortener.example.original}
-                        </span>
-                        <span className="text-adaptive font-mono text-xs truncate max-w-[250px]">
-                          https://example.com/very-long-url...
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-adaptive">
-                          {t.urlShortener.example.short}
-                        </span>
-                        <span className="text-blue-700 font-mono text-xs">
-                          dlpz.fr/abc123
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-adaptive">
-                          {t.urlShortener.example.security}
-                        </span>
-                        <span className="text-green-500 text-xs">
-                          {t.urlShortener.example.https}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <AnimatePresence>
-                  {(resultUrl || error) && (
-                    <motion.div
-                      className="mt-6 border-t border-border/50 pt-4"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      {error ? (
-                        <div className="flex items-center gap-2 text-sm text-red-500">
-                          <div className="w-2 h-2 bg-red-500 rounded-full" />
-                          {error}
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-2 text-sm font-medium text-foreground font-poppins">
-                            <Sparkles className="w-4 h-4 text-blue-700" />
-                            {t.urlShortener.success}
-                          </div>
-                          <div className="glass-card p-4">
-                            <div className="flex items-center gap-3">
-                              <a
-                                href={resultUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex-1 truncate text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline flex items-center gap-1 transition-colors duration-200"
-                              >
-                                {resultUrl}
-                                <ExternalLink className="w-3 h-3" />
-                              </a>
-                              <motion.button
-                                onClick={handleCopy}
-                                className="glass-button shrink-0 inline-flex items-center gap-1 px-4 py-2 text-sm font-medium"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                              >
-                                {copied ? (
-                                  <>
-                                    <Check className="w-4 h-4" />
-                                    {t.urlShortener.copied}
-                                  </>
-                                ) : (
-                                  <>
-                                    <Copy className="w-4 h-4" />
-                                    {t.urlShortener.copy}
-                                  </>
-                                )}
-                              </motion.button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-
-              {/* File Upload Section */}
-              <motion.div
-                className="interface-section"
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: 0.8 }}
-              >
-                <div className="section-header">
-                  <motion.div
-                    className="icon-container mx-auto mb-4"
-                    whileHover={{ scale: 1.1, rotate: -5 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Upload className="w-8 h-8" />
-                  </motion.div>
-                  <h3 className="section-title font-poppins">
-                    {t.fileUpload.title}
-                  </h3>
-                  <p className="section-description font-poppins">
-                    {t.fileUpload.description}
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div
-                    className={`drag-drop-area ${dragOver ? "dragover" : ""}`}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    onClick={() =>
-                      document.getElementById("file-input").click()
-                    }
-                  >
-                    <motion.div
-                      animate={{ scale: dragOver ? 1.05 : 1 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Upload className="w-12 h-12 mx-auto mb-4 text-muted-adaptive" />
-                      <p className="text-muted-adaptive font-poppins">
-                        {t.fileUpload.dropzone}
-                      </p>
-                      {fileInput && (
-                        <p className="text-sm text-adaptive mt-2 font-poppins">
-                          {t.fileUpload.selected} {fileInput.name}
-                        </p>
-                      )}
-                    </motion.div>
-                  </div>
-
-                  <input
-                    id="file-input"
-                    type="file"
-                    onChange={(e) => setFileInput(e.target.files?.[0] ?? null)}
-                    className="hidden"
-                  />
-
-                  <motion.button
-                    onClick={handleUpload}
-                    disabled={!fileInput}
-                    className="glass-button w-full font-poppins"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    {isLoading ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <motion.div
-                          className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full"
-                          animate={{ rotate: 360 }}
-                          transition={{
-                            duration: 1,
-                            repeat: Infinity,
-                            ease: "linear",
-                          }}
-                        />
-                        {t.fileUpload.loading}
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center gap-2">
-                        <Heart className="w-4 h-4" />
-                        {t.fileUpload.button}
-                      </div>
-                    )}
-                  </motion.button>
-                </div>
-
-                <AnimatePresence>
-                  {(resultUrl || error) && (
-                    <motion.div
-                      className="mt-6 border-t border-border/50 pt-4"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      {error ? (
-                        <div className="flex items-center gap-2 text-sm text-red-500">
-                          <div className="w-2 h-2 bg-red-500 rounded-full" />
-                          {error}
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-2 text-sm font-medium text-foreground font-poppins">
-                            <Sparkles className="w-4 h-4 text-blue-700" />
-                            {t.fileUpload.success}
-                          </div>
-                          <div className="glass-card p-4">
-                            <div className="flex items-center gap-3">
-                              <a
-                                href={resultUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex-1 truncate text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline flex items-center gap-1 transition-colors duration-200"
-                              >
-                                {resultUrl}
-                                <ExternalLink className="w-3 h-3" />
-                              </a>
-                              <motion.button
-                                onClick={handleCopy}
-                                className="glass-button shrink-0 inline-flex items-center gap-1 px-4 py-2 text-sm font-medium"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                              >
-                                {copied ? (
-                                  <>
-                                    <Check className="w-4 h-4" />
-                                    {t.urlShortener.copied}
-                                  </>
-                                ) : (
-                                  <>
-                                    <Copy className="w-4 h-4" />
-                                    {t.urlShortener.copy}
-                                  </>
-                                )}
-                              </motion.button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+              </div>
+              <span className="text-sm text-slate-300">
+                dlpz.fr - URL Shortener
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-slate-300">
+              <span>Tous droits réservés</span>
+              <span>-</span>
+              <span>© 2025 dorianlopez.fr</span>
             </div>
           </div>
-        </main>
-
-        {/* Footer - full width at bottom */}
-        <motion.footer
-          className="mini-footer py-4 mt-auto"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1 }}
-        >
-          <div className="footer-container px-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <div className="avatar-container w-6 h-6 border border-white/20 dark:border-white/20 light:border-gray-300/50">
-                  <img
-                    src="/avatar.png"
-                    alt="Avatar"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                      e.target.nextSibling.style.display = "flex";
-                    }}
-                  />
-                  <div
-                    className="avatar-fallback text-xs"
-                    style={{ display: "none" }}
-                  >
-                    DL
-                  </div>
-                </div>
-                <span className="text-sm text-muted-adaptive font-poppins">
-                  dlpz.fr - URL Shortener
-                </span>
-              </div>
-              <div className="flex items-center gap-4 text-sm text-muted-adaptive font-poppins">
-                <span>Tous droits réservés</span>
-                <span>-</span>
-                <span>© 2025 dorianlopez.fr</span>
-              </div>
-            </div>
-          </div>
-        </motion.footer>
-      </div>
-    </AuroraBackground>
+        </div>
+      </motion.footer>
+    </div>
   );
 }
 
