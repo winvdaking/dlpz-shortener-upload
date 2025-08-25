@@ -6,14 +6,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ===== FONTS ===== */
-@font-face {
-  font-family: "Kooperative";
-  src: url("/fonts/WorldDiscovery.ttf") format("truetype");
-  font-weight: normal;
-  font-style: normal;
-}
-
 /* ===== CUSTOM ANIMATIONS ===== */
 @keyframes blob {
   0% {
@@ -126,7 +118,7 @@ html {
 body {
   font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  @apply bg-transparent text-gray-900 antialiased;
+  @apply bg-transparent text-white antialiased;
   min-height: 100vh;
   max-height: 100vh;
   overflow: hidden;
@@ -154,6 +146,47 @@ body {
   width: 100vw;
 }
 
+/* ===== GRID GUIDES ===== */
+.grid-guides {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.grid-guides::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: calc(50% - 384px); /* max-w-6xl = 1152px, donc 50% - 576px */
+  width: 2px;
+  height: 100vh;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+}
+
+.grid-guides::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: calc(50% - 384px);
+  width: 2px;
+  height: 100vh;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+}
+
 #root {
   min-height: 100vh;
   max-height: 100vh;
@@ -179,7 +212,7 @@ body {
 }
 
 .glass-card {
-  @apply bg-white/5 border border-white/10 rounded-2xl;
+  @apply bg-white/15 border border-white/20 rounded-sm;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37),
@@ -258,42 +291,42 @@ body {
 
 .glass {
   @apply bg-white/10 border-white/20 rounded-lg;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15),
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1),
     inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
 }
 
 .glass-card {
-  @apply bg-white/10 border-white/15 rounded-lg;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  @apply bg-white/5 border-white/10 rounded-xl;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
 }
 
 .glass-button {
-  @apply bg-white/10 border-white/20 text-gray-900;
-  @apply hover:bg-white/30 hover:border-white/40 hover:scale-105;
+  @apply bg-white/10 border-white/20 text-white;
+  @apply hover:bg-white/20 hover:border-white/30 hover:scale-105;
   @apply focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2;
   @apply transition-all duration-300 ease-in-out;
   @apply px-6 py-3 rounded-lg font-medium;
   @apply flex items-center justify-center gap-2;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
 }
 
 .glass-input {
-  @apply bg-white/5 border-white/20 text-gray-900 placeholder:text-gray-600;
-  @apply focus:bg-white/15 focus:border-white/30;
+  @apply bg-white/5 border-white/20 text-white placeholder:text-white/60;
+  @apply focus:bg-white/10;
   @apply transition-all duration-300 ease-in-out;
   @apply px-4 py-3 rounded-lg font-medium;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
 }
 
 /* ===== BACKGROUNDS ===== */
@@ -344,12 +377,12 @@ body {
 
 .clean-header h1 {
   @apply text-4xl md:text-6xl font-bold tracking-tight mb-4;
-  @apply bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 bg-clip-text text-transparent;
+  @apply bg-gradient-to-r from-white via-purple-200 to-white bg-clip-text text-transparent;
   font-family: "Kooperative", "Poppins", sans-serif;
 }
 
 .clean-header p {
-  @apply text-lg md:text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed;
+  @apply text-lg md:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed;
 }
 
 /* ===== INTERFACE SECTIONS ===== */
@@ -368,12 +401,12 @@ body {
 }
 
 .section-title {
-  @apply text-2xl font-bold mb-2 text-gray-900;
+  @apply text-2xl font-bold mb-2 text-white;
   font-family: "Kooperative", "Poppins", sans-serif;
 }
 
 .section-description {
-  @apply text-gray-700 leading-relaxed;
+  @apply text-white/70 leading-relaxed;
 }
 
 /* ===== DRAG & DROP ===== */
@@ -381,6 +414,7 @@ body {
   @apply glass-card p-8 text-center cursor-pointer transition-all duration-300;
   @apply border-2 border-dashed border-white/20;
   @apply hover:border-white/40 hover:bg-white/10 hover:scale-102;
+  border-radius: 0;
 }
 
 .drag-drop-area.dragover {
@@ -425,11 +459,11 @@ body {
 
 /* ===== UTILITIES ===== */
 .text-adaptive {
-  @apply text-gray-900;
+  @apply text-white;
 }
 
 .text-muted-adaptive {
-  @apply text-gray-700;
+  @apply text-white/70;
 }
 
 .font-kooperative {

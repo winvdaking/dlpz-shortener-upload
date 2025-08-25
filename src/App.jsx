@@ -314,9 +314,6 @@ function App() {
                   <h3 className="section-title font-poppins">
                     {t.urlShortener.title}
                   </h3>
-                  <p className="section-description font-poppins">
-                    {t.urlShortener.description}
-                  </p>
                 </div>
 
                 <div className="space-y-4">
@@ -326,6 +323,7 @@ function App() {
                     value={urlInput}
                     onChange={(e) => setUrlInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleShorten()}
+                    className="w-full"
                   />
                   <motion.button
                     onClick={handleShorten}
