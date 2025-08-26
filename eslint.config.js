@@ -20,6 +20,13 @@ export default [
         document: "readonly",
         window: "readonly",
         console: "readonly",
+        fetch: "readonly",
+        FormData: "readonly",
+        navigator: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
       },
       parserOptions: {
         ecmaFeatures: {

@@ -1,0 +1,74 @@
+{
+  "name": "dlpz.fr - URL Shortener & File Upload Service",
+  "short_name": "dlpz.fr",
+  "description": "Shorten your URLs and upload your files easily. Fast, secure and free service created by Dorian Lopez.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#06b6d4",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["utilities", "productivity"],
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://dorianlopez.fr/avatar.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "dlpz.fr main interface"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Shorten URL",
+      "short_name": "URL",
+      "description": "Quickly shorten a URL",
+      "url": "/?action=shorten",
+      "icons": [
+        {
+          "src": "/favicon-32x32.png",
+          "sizes": "32x32"
+        }
+      ]
+    },
+    {
+      "name": "Upload File",
+      "short_name": "Upload",
+      "description": "Upload a file",
+      "url": "/?action=upload",
+      "icons": [
+        {
+          "src": "/favicon-32x32.png",
+          "sizes": "32x32"
+        }
+      ]
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "web",
+      "url": "https://dorianlopez.fr"
+    }
+  ],
+  "prefer_related_applications": false
+}

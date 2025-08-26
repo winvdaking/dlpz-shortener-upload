@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react";
+import { HelmetProvider } from "react-helmet-async";
 import Hero from "./components/hero";
+import SEO from "./components/SEO";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
 function App() {
@@ -112,27 +114,30 @@ function App() {
   }, [resultUrl]);
 
   return (
-    <ThemeProvider>
-      <div className="min-h-screen">
-        <Hero
-          urlInput={urlInput}
-          setUrlInput={setUrlInput}
-          fileInput={fileInput}
-          setFileInput={setFileInput}
-          isLoading={isLoading}
-          resultUrl={resultUrl}
-          error={error}
-          copied={copied}
-          dragOver={dragOver}
-          handleShorten={handleShorten}
-          handleUpload={handleUpload}
-          handleDragOver={handleDragOver}
-          handleDragLeave={handleDragLeave}
-          handleDrop={handleDrop}
-          handleCopy={handleCopy}
-        />
-      </div>
-    </ThemeProvider>
+    <HelmetProvider>
+      <ThemeProvider>
+        <div className="min-h-screen">
+          <SEO />
+          <Hero
+            urlInput={urlInput}
+            setUrlInput={setUrlInput}
+            fileInput={fileInput}
+            setFileInput={setFileInput}
+            isLoading={isLoading}
+            resultUrl={resultUrl}
+            error={error}
+            copied={copied}
+            dragOver={dragOver}
+            handleShorten={handleShorten}
+            handleUpload={handleUpload}
+            handleDragOver={handleDragOver}
+            handleDragLeave={handleDragLeave}
+            handleDrop={handleDrop}
+            handleCopy={handleCopy}
+          />
+        </div>
+      </ThemeProvider>
+    </HelmetProvider>
   );
 }
 
