@@ -1,4 +1,11 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
 
 const ThemeContext = createContext();
 
@@ -12,7 +19,7 @@ export function ThemeProvider({ children }) {
     applyTheme(savedTheme);
   }, []);
 
-  const applyTheme = (newTheme) => {
+  const applyTheme = useCallback((newTheme) => {
     const root = document.documentElement;
     const body = document.body;
 
@@ -31,34 +38,41 @@ export function ThemeProvider({ children }) {
       body.style.background = "#000000";
       body.style.color = "#ffffff";
     }
-  };
+  }, []);
 
-  const changeTheme = (newTheme) => {
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    applyTheme(newTheme);
-  };
+  const changeTheme = useCallback(
+    (newTheme) => {
+      setTheme(newTheme);
+      localStorage.setItem("theme", newTheme);
+      applyTheme(newTheme);
+    },
+    [applyTheme]
+  );
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     const newTheme = theme === "dark" ? "light" : "dark";
     changeTheme(newTheme);
-  };
+  }, [theme, changeTheme]);
 
-  const getBackgroundClass = () => {
+  const getBackgroundClass = useCallback(() => {
     return theme === "light" ? "light-background" : "dark-background";
-  };
+  }, [theme]);
 
-  const getThemeClass = () => {
+  const getThemeClass = useCallback(() => {
     return theme === "light" ? "theme-light" : "theme-dark";
-  };
+  }, [theme]);
 
-  const value = {
-    theme,
-    setTheme: changeTheme,
-    toggleTheme,
-    getBackgroundClass,
-    getThemeClass,
-  };
+  // Optimisation: useMemo pour éviter la re-création de l'objet value
+  const value = useMemo(
+    () => ({
+      theme,
+      setTheme: changeTheme,
+      toggleTheme,
+      getBackgroundClass,
+      getThemeClass,
+    }),
+    [theme, changeTheme, toggleTheme, getBackgroundClass, getThemeClass]
+  );
 
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

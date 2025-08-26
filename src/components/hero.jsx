@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { MeshGradient, PulsingBorder } from "@paper-design/shaders-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -36,10 +36,11 @@ export default function Hero({
   const [isActive, setIsActive] = useState(false);
   const { theme, getBackgroundClass, getThemeClass } = useTheme();
 
-  useEffect(() => {
-    const handleMouseEnter = () => setIsActive(true);
-    const handleMouseLeave = () => setIsActive(false);
+  // Optimisation: useCallback pour éviter les re-créations de fonctions
+  const handleMouseEnter = useCallback(() => setIsActive(true), []);
+  const handleMouseLeave = useCallback(() => setIsActive(false), []);
 
+  useEffect(() => {
     const container = containerRef.current;
     if (container) {
       container.addEventListener("mouseenter", handleMouseEnter);
@@ -52,7 +53,29 @@ export default function Hero({
         container.removeEventListener("mouseleave", handleMouseLeave);
       }
     };
-  }, []);
+  }, [handleMouseEnter, handleMouseLeave]);
+
+  // Optimisation: useMemo pour les valeurs calculées
+  const meshColors = useMemo(
+    () =>
+      theme === "light"
+        ? ["#f8fafc", "#e2e8f0", "#06b6d4", "#f97316"]
+        : ["#000000", "#ffffff", "#06b6d4", "#f97316"],
+    [theme]
+  );
+
+  const pulsingColors = useMemo(
+    () => [
+      "#06b6d4",
+      "#0891b2",
+      "#f97316",
+      "#00FF88",
+      "#FFD700",
+      "#FF6B35",
+      "#ffffff",
+    ],
+    []
+  );
 
   return (
     <div
@@ -60,6 +83,8 @@ export default function Hero({
       className={`h-screen relative overflow-hidden flex flex-col ${getThemeClass()}`}
     >
       <div id="background_noisy" className="absolute inset-0 w-full h-full" />
+
+      {/* SVG simplifié avec moins de filtres */}
       <svg className="absolute inset-0 w-0 h-0">
         <defs>
           <filter
@@ -69,64 +94,10 @@ export default function Hero({
             width="200%"
             height="200%"
           >
-            <feTurbulence baseFrequency="0.005" numOctaves="1" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="0.3" />
-            <feColorMatrix
-              type="matrix"
-              values="1 0 0 0 0.02
-                      0 1 0 0 0.02
-                      0 0 1 0 0.05
-                      0 0 0 0.9 0"
-              result="tint"
-            />
-          </filter>
-          <filter
-            id="gooey-filter"
-            x="-50%"
-            y="-50%"
-            width="200%"
-            height="200%"
-          >
-            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
-            <feColorMatrix
-              in="blur"
-              mode="matrix"
-              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9"
-              result="gooey"
-            />
-            <feComposite in="SourceGraphic" in2="gooey" operator="atop" />
+            <feTurbulence baseFrequency="0.01" numOctaves="1" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="0.2" />
           </filter>
           <filter id="logo-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-            <feMerge>
-              <feMergeNode in="coloredBlur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <linearGradient
-            id="logo-gradient"
-            x1="0%"
-            y1="0%"
-            x2="100%"
-            y2="100%"
-          >
-            <stop offset="0%" stopColor="#06b6d4" />
-            <stop offset="50%" stopColor="#ffffff" />
-            <stop offset="100%" stopColor="#0891b2" />
-          </linearGradient>
-          <linearGradient
-            id="hero-gradient"
-            x1="0%"
-            y1="0%"
-            x2="100%"
-            y2="100%"
-          >
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="30%" stopColor="#06b6d4" />
-            <stop offset="70%" stopColor="#f97316" />
-            <stop offset="100%" stopColor="#ffffff" />
-          </linearGradient>
-          <filter id="text-glow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="2" result="coloredBlur" />
             <feMerge>
               <feMergeNode in="coloredBlur" />
@@ -142,13 +113,9 @@ export default function Hero({
       />
 
       <MeshGradient
-        className="absolute inset-0 w-full h-full opacity-60"
-        colors={
-          theme === "light"
-            ? ["#f8fafc", "#e2e8f0", "#06b6d4", "#f97316"]
-            : ["#000000", "#ffffff", "#06b6d4", "#f97316"]
-        }
-        speed={0.2}
+        className="absolute inset-0 w-full h-full opacity-40"
+        colors={meshColors}
+        speed={0.1}
         wireframe="true"
         backgroundColor="transparent"
       />
@@ -157,58 +124,18 @@ export default function Hero({
       <header className="relative z-20 flex items-center justify-between p-6 flex-shrink-0">
         <motion.div
           className="flex items-center group cursor-pointer"
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.02 }}
           transition={{ type: "spring", stiffness: 400, damping: 10 }}
         >
           <motion.div
             className="text-xl font-light text-white group-hover:drop-shadow-lg transition-all duration-300 relative"
-            style={{
-              filter: "url(#logo-glow)",
-            }}
-            whileHover={{
-              scale: 1.1,
-              rotate: [0, -2, 2, 0],
-              transition: {
-                scale: { duration: 0.3 },
-                rotate: { duration: 0.6, ease: "easeInOut" },
-              },
-            }}
+            style={{ filter: "url(#logo-glow)" }}
+            whileHover={{ scale: 1.05 }}
           >
-            <motion.span
-              className="block tracking-wider font-light dark:text-white/50 text-black/50"
-              whileHover={{
-                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                transition: { duration: 1.2, ease: "easeInOut" },
-              }}
-            >
+            <span className="block tracking-wider font-light dark:text-white/50 text-black/50">
               dlpz.fr
-            </motion.span>
+            </span>
           </motion.div>
-
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-            {[...Array(6)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-1 h-1 bg-white/60 rounded-full"
-                style={{
-                  left: `${20 + Math.random() * 60}%`,
-                  top: `${20 + Math.random() * 60}%`,
-                }}
-                animate={{
-                  y: [-10, -20, -10],
-                  x: [0, Math.random() * 20 - 10, 0],
-                  opacity: [0, 1, 0],
-                  scale: [0, 1, 0],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Number.POSITIVE_INFINITY,
-                  delay: i * 0.2,
-                  ease: "easeInOut",
-                }}
-              />
-            ))}
-          </div>
         </motion.div>
 
         {/* Navigation */}
@@ -221,7 +148,6 @@ export default function Hero({
           </a>
         </nav>
 
-        {/* Login Button Group with Arrow */}
         <ThemeToggle />
       </header>
 
@@ -231,9 +157,7 @@ export default function Hero({
           {/* Badge */}
           <motion.div
             className="inline-flex items-center px-4 py-2 rounded-full bg-white/5 backdrop-blur-xl mb-6 relative border border-white/15"
-            style={{
-              filter: "url(#glass-effect)",
-            }}
+            style={{ filter: "url(#glass-effect)" }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
@@ -277,14 +201,14 @@ export default function Hero({
             {/* URL Shortener Card */}
             <motion.div
               className="group relative rounded-2xl bg-white/10 p-6 backdrop-blur-xl transition-all duration-300 hover:bg-white/15"
+              whileHover={{ y: -2 }}
               transition={{ duration: 0.2 }}
             >
-              {/* Card Content */}
               <div className="relative z-10">
                 {/* Icon */}
                 <motion.div
                   className="mx-auto mb-4 w-12 h-12 rounded-full flex items-center justify-center bg-white/10"
-                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <Link className="w-6 h-6 text-white" />
@@ -325,17 +249,6 @@ export default function Hero({
                         }}
                       />
                       <span className="text-white/80">Generating</span>
-                      <motion.span
-                        className="text-white/80"
-                        animate={{ opacity: [1, 0] }}
-                        transition={{
-                          duration: 1.5,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
-                      >
-                        ...
-                      </motion.span>
                     </>
                   ) : (
                     <>
@@ -400,18 +313,16 @@ export default function Hero({
                     </motion.div>
                   )}
                 </AnimatePresence>
+
                 {/* Example Box */}
                 <div className="mt-6 p-4 bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg font-mono text-sm">
                   <div className="space-y-3">
-                    {/* Example */}
                     <div className="flex items-center gap-2">
                       <span className="text-orange-400">→</span>
                       <span className="text-white/60 truncate">
                         https://www.google.com/url?q=https://www.google.com&sa=D&source=web&cd=&ved=2ahUKEwj...
                       </span>
                     </div>
-
-                    {/* Result */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-green-400">→</span>
@@ -421,12 +332,8 @@ export default function Hero({
                       </div>
                       <Zap className="w-3 h-3" />
                     </div>
-
-                    {/* Security */}
                     <div className="flex items-center gap-2 pt-2 border-t border-white/10">
-                      <span>
-                        <Lock className="w-3 h-3" />
-                      </span>
+                      <Lock className="w-3 h-3" />
                       <span className="text-white/60">Sécurisé et anonyme</span>
                     </div>
                   </div>
@@ -437,14 +344,14 @@ export default function Hero({
             {/* File Upload Card */}
             <motion.div
               className="group relative rounded-2xl bg-white/5 p-6 backdrop-blur-xl transition-all duration-300 hover:bg-white/10"
+              whileHover={{ y: -2 }}
               transition={{ duration: 0.2 }}
             >
-              {/* Card Content */}
               <div className="relative z-10">
                 {/* Icon */}
                 <motion.div
                   className="mx-auto mb-4 w-12 h-12 rounded-full flex items-center justify-center bg-white/10"
-                  whileHover={{ scale: 1.1, rotate: -5 }}
+                  whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <Upload className="w-6 h-6 text-white" />
@@ -471,7 +378,7 @@ export default function Hero({
                   onClick={() => document.getElementById("file-input").click()}
                 >
                   <motion.div
-                    animate={{ scale: dragOver ? 1.05 : 1 }}
+                    animate={{ scale: dragOver ? 1.02 : 1 }}
                     transition={{ duration: 0.2 }}
                   >
                     <Upload className="w-8 h-8 mx-auto mb-2 text-slate-400" />
@@ -589,7 +496,8 @@ export default function Hero({
                     </motion.div>
                   )}
                 </AnimatePresence>
-                <div className="mt-6 p-4 bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg font-mono text-sm">
+
+                <div className="mt-6 p-4 bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg font-mono text-sm dark:border-white/10 dark:bg-white/5">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <span className="text-orange-400">
@@ -608,7 +516,6 @@ export default function Hero({
       </main>
 
       <footer className="relative z-20 flex items-center justify-between py-6 px-6 text-black/50 text-sm flex-shrink-0 dark:text-white/50 font-light">
-        {/* Avatar à gauche */}
         <div className="flex items-center">
           <img
             src="https://dorianlopez.fr/avatar.png"
@@ -617,7 +524,6 @@ export default function Hero({
           />
         </div>
 
-        {/* Contenu central */}
         <p className="text-black/50 dark:text-white/50">
           dlpz.fr © {new Date().getFullYear()} - Tous droits réservés{" "}
           <a
@@ -630,33 +536,24 @@ export default function Hero({
           </a>
         </p>
 
-        {/* Espace vide à droite pour équilibrer */}
         <div className="w-8 h-8"></div>
       </footer>
 
-      {/* Pulsing Border Element */}
+      {/* Pulsing Border Element - Optimisé */}
       <div className="absolute bottom-8 right-8 z-30">
         <div className="relative w-20 h-20 flex items-center justify-center">
           <PulsingBorder
-            colors={[
-              "#06b6d4",
-              "#0891b2",
-              "#f97316",
-              "#00FF88",
-              "#FFD700",
-              "#FF6B35",
-              "#ffffff",
-            ]}
+            colors={pulsingColors}
             colorBack="#00000000"
-            speed={1.5}
+            speed={1}
             roundness={1}
             thickness={0.1}
             softness={0.2}
-            intensity={5}
+            intensity={3}
             spotSize={0.1}
             pulse={0.1}
-            smoke={0.5}
-            smokeSize={4}
+            smoke={0.3}
+            smokeSize={3}
             scale={0.65}
             rotation={0}
             frame={9161408.251009725}
@@ -667,13 +564,13 @@ export default function Hero({
             }}
           />
 
-          {/* Rotating Text Around the Pulsing Border */}
+          {/* Rotating Text - Optimisé */}
           <motion.svg
             className="absolute inset-0 w-full h-full"
             viewBox="0 0 100 100"
             animate={{ rotate: 360 }}
             transition={{
-              duration: 20,
+              duration: 30,
               repeat: Number.POSITIVE_INFINITY,
               ease: "linear",
             }}

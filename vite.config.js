@@ -1,16 +1,49 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import path from "path";
-import { fileURLToPath } from "url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+  build: {
+    // Optimisations de build
+    target: "esnext",
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom"],
+          animations: ["framer-motion"],
+          ui: ["lucide-react"],
+          shaders: ["@paper-design/shaders-react"],
+        },
+      },
+    },
+    // Optimisation des assets
+    assetsInlineLimit: 4096,
+    chunkSizeWarningLimit: 1000,
+  },
+  server: {
+    // Optimisations de développement
+    hmr: {
+      overlay: false,
+    },
+    // Configuration pour éviter les problèmes de permissions
+    fs: {
+      strict: false,
     },
   },
+  optimizeDeps: {
+    include: ["react", "react-dom", "framer-motion", "lucide-react"],
+    // Configuration pour éviter les problèmes de cache
+    force: true,
+  },
+  // Configuration pour éviter les problèmes de permissions sur OneDrive
+  clearScreen: false,
+  logLevel: "info",
 });

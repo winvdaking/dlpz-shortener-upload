@@ -166,12 +166,13 @@
   }
 }
 
+/* ===== BACKGROUND NOISE ===== */
 #background_noisy {
   background: url("background_grain.webp");
   pointer-events: none;
   opacity: 0.9;
   background-blend-mode: normal;
-  background-size: 25ww auto;
+  background-size: 25vw auto;
   position: fixed;
   top: 0;
   left: 0;
@@ -274,6 +275,22 @@
   background: hsl(var(--background));
 }
 
+.theme-light h1,
+.theme-light h2,
+.theme-light h3,
+.theme-light h4,
+.theme-light h5,
+.theme-light h6,
+.theme-light p,
+.theme-light span,
+.theme-light a,
+.theme-light button,
+.theme-light input,
+.theme-light textarea,
+.theme-light select {
+  color: rgb(0, 0, 0, 0.5);
+}
+
 .theme-light .glass-card {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -281,17 +298,6 @@
 }
 
 .theme-light .glass-card:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(0, 0, 0, 0.2);
-}
-
-.theme-light .water-drop-button {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  color: hsl(var(--text-primary));
-}
-
-.theme-light .water-drop-button:hover {
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(0, 0, 0, 0.2);
 }
@@ -330,17 +336,6 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-.theme-dark .water-drop-button {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: hsl(var(--text-primary));
-}
-
-.theme-dark .water-drop-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
 .theme-dark .theme-toggle-button {
   border-color: rgba(255, 255, 255, 0.2);
   color: hsl(var(--text-primary));
@@ -359,23 +354,7 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-/* Styles pour les textes selon le thème */
-.theme-light h1,
-.theme-light h2,
-.theme-light h3,
-.theme-light span {
-  color: hsl(var(--text-primary));
-}
-
-.theme-dark h1,
-.theme-dark h2,
-.theme-dark h3,
-.theme-dark p,
-.theme-dark span {
-  color: hsl(var(--text-primary));
-}
-
-/* Styles spécifiques pour les éléments de l'interface */
+/* ===== INPUT STYLES ===== */
 .theme-light input {
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -394,41 +373,6 @@
 
 .theme-dark input::placeholder {
   color: rgba(255, 255, 255, 0.6);
-}
-
-.light-background::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(
-      90deg,
-      rgba(0, 0, 0, 0.03) 1px,
-      transparent 1px
-    ),
-    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px);
-  background-size: 50px 50px;
-}
-
-.light-background::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-      circle at 20% 80%,
-      rgba(59, 130, 246, 0.1) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 80% 20%,
-      rgba(147, 51, 234, 0.1) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 40% 40%,
-      rgba(6, 182, 212, 0.1) 0%,
-      transparent 50%
-    );
-  pointer-events: none;
 }
 
 /* ===== GLASS EFFECT CARDS ===== */
@@ -465,112 +409,6 @@
 
 .glass-card:hover::before {
   opacity: 1;
-}
-
-.light .glass-card {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.light .glass-card:hover {
-  background: rgba(255, 255, 255, 0.8);
-  border-color: rgba(0, 0, 0, 0.2);
-}
-
-/* ===== WATER DROP ICONS ===== */
-.icon-container {
-  position: relative;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.icon-container svg {
-  color: white;
-  transition: all 0.3s ease;
-}
-
-.icon-container::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.3) 0%,
-    transparent 70%
-  );
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: all 0.3s ease;
-}
-
-.icon-container:hover::before {
-  width: 100%;
-  height: 100%;
-}
-
-.icon-container:hover {
-  transform: scale(1.1);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-}
-
-.icon-container:hover svg {
-  transform: scale(1.2);
-}
-
-.light .icon-container {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.light .icon-container svg {
-  color: #374151;
-}
-
-.light .icon-container::before {
-  background: radial-gradient(
-    circle,
-    rgba(59, 130, 246, 0.2) 0%,
-    transparent 70%
-  );
-}
-
-.light .icon-container:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-/* ===== NAVBAR ===== */
-.navbar-border {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.02);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-
-.light .navbar-border {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  background: rgba(0, 0, 0, 0.02);
-}
-
-.navbar-container {
-  max-width: 80rem;
-  margin: 0 auto;
-  width: 100%;
-  padding: 0 1.5rem;
 }
 
 /* ===== THEME TOGGLE ===== */
@@ -629,24 +467,4 @@
 .theme-toggle-button:hover svg {
   transform: scale(1.2);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-}
-
-.light .theme-toggle-button {
-  border-color: rgba(0, 0, 0, 0.2);
-  color: #374151;
-}
-
-.light .theme-toggle-button::before {
-  background: radial-gradient(circle, rgba(0, 0, 0, 0.2) 0%, transparent 70%);
-}
-
-.light .theme-toggle-button:hover {
-  border-color: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-/* Style spécial pour les drapeaux */
-.theme-toggle-button:has-text {
-  font-size: 1.2rem;
-  line-height: 1;
 }

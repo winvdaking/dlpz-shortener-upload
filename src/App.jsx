@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Hero from "./components/hero";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
@@ -11,8 +11,8 @@ function App() {
   const [copied, setCopied] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
-  // Handle URL shortening
-  const handleShorten = async () => {
+  // Optimisation: useCallback pour éviter les re-créations de fonctions
+  const handleShorten = useCallback(async () => {
     if (!urlInput.trim()) return;
 
     setIsLoading(true);
@@ -43,10 +43,9 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [urlInput]);
 
-  // Handle file upload
-  const handleUpload = async () => {
+  const handleUpload = useCallback(async () => {
     if (!fileInput) return;
 
     setIsLoading(true);
@@ -79,30 +78,28 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fileInput]);
 
-  // Handle drag and drop
-  const handleDragOver = (e) => {
+  const handleDragOver = useCallback((e) => {
     e.preventDefault();
     setDragOver(true);
-  };
+  }, []);
 
-  const handleDragLeave = (e) => {
+  const handleDragLeave = useCallback((e) => {
     e.preventDefault();
     setDragOver(false);
-  };
+  }, []);
 
-  const handleDrop = (e) => {
+  const handleDrop = useCallback((e) => {
     e.preventDefault();
     setDragOver(false);
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       setFileInput(files[0]);
     }
-  };
+  }, []);
 
-  // Handle copy to clipboard
-  const handleCopy = async () => {
+  const handleCopy = useCallback(async () => {
     if (!resultUrl) return;
 
     try {
@@ -112,12 +109,11 @@ function App() {
     } catch (err) {
       console.error("Copy failed:", err);
     }
-  };
+  }, [resultUrl]);
 
   return (
     <ThemeProvider>
       <div className="min-h-screen">
-        {/* Hero Section */}
         <Hero
           urlInput={urlInput}
           setUrlInput={setUrlInput}
