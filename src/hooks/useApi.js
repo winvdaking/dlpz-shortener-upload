@@ -1,43 +1,43 @@
 import { useState, useCallback } from "react";
 import { shortenUrl, uploadFile, checkApiHealth } from "../config/api";
+import { useAlert } from "../contexts/AlertContext";
 
 /**
  * Hook personnalisé pour gérer les appels API
  */
 export const useApi = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const { showError, showSuccess } = useAlert();
 
-  const clearError = useCallback(() => {
-    setError("");
-  }, []);
+  const handleApiCall = useCallback(
+    async (apiCall, onSuccess, onError, successMessage) => {
+      setIsLoading(true);
 
-  const handleApiCall = useCallback(async (apiCall, onSuccess, onError) => {
-    setIsLoading(true);
-    setError("");
-
-    try {
-      const result = await apiCall();
-      if (onSuccess) {
-        onSuccess(result);
+      try {
+        const result = await apiCall();
+        if (onSuccess) {
+          onSuccess(result);
+        }
+        if (successMessage) {
+          showSuccess(successMessage);
+        }
+        return result;
+      } catch (err) {
+        const errorMessage = err.message || "Une erreur est survenue";
+        showError(errorMessage);
+        if (onError) {
+          onError(err);
+        }
+        throw err;
+      } finally {
+        setIsLoading(false);
       }
-      return result;
-    } catch (err) {
-      const errorMessage = err.message || "Une erreur est survenue";
-      setError(errorMessage);
-      if (onError) {
-        onError(err);
-      }
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    [showError, showSuccess]
+  );
 
   return {
     isLoading,
-    error,
-    clearError,
     handleApiCall,
   };
 };
@@ -46,7 +46,7 @@ export const useApi = () => {
  * Hook pour le raccourcissement d'URL
  */
 export const useUrlShortener = () => {
-  const { isLoading, error, clearError, handleApiCall } = useApi();
+  const { isLoading, handleApiCall } = useApi();
   const [result, setResult] = useState("");
 
   const shorten = useCallback(
@@ -59,7 +59,9 @@ export const useUrlShortener = () => {
           } else {
             throw new Error(data.message || "Échec du raccourcissement");
           }
-        }
+        },
+        null,
+        "URL raccourcie avec succès !"
       );
     },
     [handleApiCall]
@@ -67,12 +69,10 @@ export const useUrlShortener = () => {
 
   const clearResult = useCallback(() => {
     setResult("");
-    clearError();
-  }, [clearError]);
+  }, []);
 
   return {
     isLoading,
-    error,
     result,
     shorten,
     clearResult,
@@ -83,7 +83,7 @@ export const useUrlShortener = () => {
  * Hook pour l'upload de fichiers
  */
 export const useFileUpload = () => {
-  const { isLoading, error, clearError, handleApiCall } = useApi();
+  const { isLoading, handleApiCall } = useApi();
   const [result, setResult] = useState("");
 
   const upload = useCallback(
@@ -102,7 +102,9 @@ export const useFileUpload = () => {
           } else {
             throw new Error(data.message || "Échec de l'upload");
           }
-        }
+        },
+        null,
+        "Fichier uploadé avec succès !"
       );
     },
     [handleApiCall]
@@ -110,12 +112,10 @@ export const useFileUpload = () => {
 
   const clearResult = useCallback(() => {
     setResult("");
-    clearError();
-  }, [clearError]);
+  }, []);
 
   return {
     isLoading,
-    error,
     result,
     upload,
     clearResult,
@@ -126,7 +126,7 @@ export const useFileUpload = () => {
  * Hook pour vérifier la santé de l'API
  */
 export const useApiHealth = () => {
-  const { isLoading, error, handleApiCall } = useApi();
+  const { isLoading, handleApiCall } = useApi();
   const [isHealthy, setIsHealthy] = useState(false);
 
   const checkHealth = useCallback(async () => {
@@ -146,7 +146,6 @@ export const useApiHealth = () => {
 
   return {
     isLoading,
-    error,
     isHealthy,
     checkHealth,
   };

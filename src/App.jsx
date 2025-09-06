@@ -2,7 +2,9 @@ import { useState, useCallback } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import Hero from "./components/hero";
 import SEO from "./components/SEO";
+import AlertContainer from "./components/AlertContainer";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { AlertProvider } from "./contexts/AlertContext";
 import { useUrlShortener, useFileUpload } from "./hooks/useApi";
 
 function App() {
@@ -60,28 +62,30 @@ function App() {
 
   return (
     <HelmetProvider>
-      <ThemeProvider>
-        <div className="min-h-screen">
-          <SEO />
-          <Hero
-            urlInput={urlInput}
-            setUrlInput={setUrlInput}
-            fileInput={fileInput}
-            setFileInput={setFileInput}
-            isLoading={urlShortener.isLoading || fileUpload.isLoading}
-            resultUrl={urlShortener.result || fileUpload.result}
-            error={urlShortener.error || fileUpload.error}
-            copied={copied}
-            dragOver={dragOver}
-            handleShorten={handleShorten}
-            handleUpload={handleUpload}
-            handleDragOver={handleDragOver}
-            handleDragLeave={handleDragLeave}
-            handleDrop={handleDrop}
-            handleCopy={handleCopy}
-          />
-        </div>
-      </ThemeProvider>
+      <AlertProvider>
+        <ThemeProvider>
+          <div className="min-h-screen">
+            <SEO />
+            <Hero
+              urlInput={urlInput}
+              setUrlInput={setUrlInput}
+              fileInput={fileInput}
+              setFileInput={setFileInput}
+              isLoading={urlShortener.isLoading || fileUpload.isLoading}
+              resultUrl={urlShortener.result || fileUpload.result}
+              copied={copied}
+              dragOver={dragOver}
+              handleShorten={handleShorten}
+              handleUpload={handleUpload}
+              handleDragOver={handleDragOver}
+              handleDragLeave={handleDragLeave}
+              handleDrop={handleDrop}
+              handleCopy={handleCopy}
+            />
+            <AlertContainer />
+          </div>
+        </ThemeProvider>
+      </AlertProvider>
     </HelmetProvider>
   );
 }

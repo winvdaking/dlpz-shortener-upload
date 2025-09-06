@@ -13,6 +13,18 @@ const __dirname = dirname(__filename);
 const router = express.Router();
 const filesFile = join(__dirname, "..", "data", "files.json");
 
+// Gestion des requêtes OPTIONS (preflight CORS)
+router.options("*", (req, res) => {
+  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Requested-With"
+  );
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.sendStatus(200);
+});
+
 // Configuration Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

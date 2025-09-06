@@ -14,6 +14,7 @@ import urlRoutes from "./routes/url.js";
 import uploadRoutes from "./routes/upload.js";
 
 // Import du middleware de sécurité
+import { sanitizeInput } from "./middleware/security.js";
 
 // Configuration
 dotenv.config();
@@ -33,8 +34,8 @@ app.use(
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:", "blob:"],
+        connectSrc: ["'self'", "http://localhost:*", "http://127.0.0.1:*"],
         fontSrc: ["'self'"],
         objectSrc: ["'none'"],
         mediaSrc: ["'self'"],
@@ -44,11 +45,14 @@ app.use(
         upgradeInsecureRequests: [],
       },
     },
-    hsts: {
-      maxAge: 31536000,
-      includeSubDomains: true,
-      preload: true,
-    },
+    hsts:
+      process.env.NODE_ENV === "production"
+        ? {
+            maxAge: 31536000,
+            includeSubDomains: true,
+            preload: true,
+          }
+        : false,
     noSniff: true,
     xssFilter: true,
     referrerPolicy: { policy: "strict-origin-when-cross-origin" },
@@ -99,11 +103,35 @@ app.use("/api/", generalLimiter);
 app.use("/api/upload", uploadLimiter);
 app.use("/api/url", urlLimiter);
 
-// CORS
+// CORS - Configuration plus permissive pour le développement
+const allowedOrigins = [
+  process.env.FRONTEND_URL || "http://localhost:5173",
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:3002",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:3001",
+  "http://127.0.0.1:3002",
+];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: function (origin, callback) {
+      // Permettre les requêtes sans origine (ex: Postman, applications mobiles)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        console.log("CORS blocked for origin:", origin);
+        callback(new Error("Non autorisé par CORS"));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    exposedHeaders: ["Content-Range", "X-Content-Range"],
   })
 );
 

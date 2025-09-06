@@ -22,7 +22,6 @@ export default function Hero({
   setFileInput,
   isLoading,
   resultUrl,
-  error,
   copied,
   dragOver,
   handleShorten,
@@ -260,7 +259,7 @@ export default function Hero({
 
                 {/* Result */}
                 <AnimatePresence>
-                  {(resultUrl || error) && (
+                  {resultUrl && (
                     <motion.div
                       className="mt-4 p-4 bg-white/10 rounded-lg border border-white/20"
                       initial={{ opacity: 0, height: 0 }}
@@ -268,48 +267,41 @@ export default function Hero({
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.3 }}
                     >
-                      {error ? (
-                        <div className="flex items-center gap-2 text-red-400">
-                          <div className="w-2 h-2 bg-red-400 rounded-full" />
-                          {error}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-green-400">
+                          <Sparkles className="w-4 h-4" />
+                          URL shortened successfully
                         </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2 text-green-400">
-                            <Sparkles className="w-4 h-4" />
-                            URL shortened successfully
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <a
-                              href={resultUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex-1 truncate text-cyan-400 hover:text-cyan-300 underline flex items-center gap-1 transition-colors duration-200"
-                            >
-                              {resultUrl}
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                            <motion.button
-                              onClick={handleCopy}
-                              className="px-3 py-1 bg-white/10 border border-white/20 rounded text-sm hover:bg-white/20 transition-colors duration-200 flex items-center gap-1"
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              {copied ? (
-                                <>
-                                  <Check className="w-3 h-3" />
-                                  Copied
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-3 h-3" />
-                                  Copy
-                                </>
-                              )}
-                            </motion.button>
-                          </div>
+                        <div className="flex items-center gap-3">
+                          <a
+                            href={resultUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex-1 truncate text-cyan-400 hover:text-cyan-300 underline flex items-center gap-1 transition-colors duration-200"
+                          >
+                            {resultUrl}
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                          <motion.button
+                            onClick={handleCopy}
+                            className="px-3 py-1 bg-white/10 border border-white/20 rounded text-sm hover:bg-white/20 transition-colors duration-200 flex items-center gap-1"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            {copied ? (
+                              <>
+                                <Check className="w-3 h-3" />
+                                Copied
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                Copy
+                              </>
+                            )}
+                          </motion.button>
                         </div>
-                      )}
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -443,7 +435,7 @@ export default function Hero({
 
                 {/* Result */}
                 <AnimatePresence>
-                  {(resultUrl || error) && (
+                  {resultUrl && (
                     <motion.div
                       className="mt-4 p-4 bg-white/10 rounded-lg border border-white/20"
                       initial={{ opacity: 0, height: 0 }}
@@ -451,48 +443,41 @@ export default function Hero({
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.3 }}
                     >
-                      {error ? (
-                        <div className="flex items-center gap-2 text-red-400">
-                          <div className="w-2 h-2 bg-red-400 rounded-full" />
-                          {error}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-green-400">
+                          <Sparkles className="w-4 h-4" />
+                          File uploaded successfully
                         </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2 text-green-400">
-                            <Sparkles className="w-4 h-4" />
-                            File uploaded successfully
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <a
-                              href={resultUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex-1 truncate text-orange-400 hover:text-orange-300 underline flex items-center gap-1 transition-colors duration-200"
-                            >
-                              {resultUrl}
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                            <motion.button
-                              onClick={handleCopy}
-                              className="px-3 py-1 bg-white/10 border border-white/20 rounded text-sm hover:bg-white/20 transition-colors duration-200 flex items-center gap-1"
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              {copied ? (
-                                <>
-                                  <Check className="w-3 h-3" />
-                                  Copied
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-3 h-3" />
-                                  Copy
-                                </>
-                              )}
-                            </motion.button>
-                          </div>
+                        <div className="flex items-center gap-3">
+                          <a
+                            href={resultUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex-1 truncate text-orange-400 hover:text-orange-300 underline flex items-center gap-1 transition-colors duration-200"
+                          >
+                            {resultUrl}
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                          <motion.button
+                            onClick={handleCopy}
+                            className="px-3 py-1 bg-white/10 border border-white/20 rounded text-sm hover:bg-white/20 transition-colors duration-200 flex items-center gap-1"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            {copied ? (
+                              <>
+                                <Check className="w-3 h-3" />
+                                Copied
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                Copy
+                              </>
+                            )}
+                          </motion.button>
                         </div>
-                      )}
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
