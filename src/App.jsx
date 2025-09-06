@@ -7,13 +7,14 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { AlertProvider } from "./contexts/AlertContext";
 import { useUrlShortener, useFileUpload } from "./hooks/useApi";
 
-function App() {
+// Composant interne qui utilise les hooks
+function AppContent() {
   const [urlInput, setUrlInput] = useState("");
   const [fileInput, setFileInput] = useState(null);
   const [copied, setCopied] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
-  // Hooks pour les appels API
+  // Hooks pour les appels API - maintenant dans le bon contexte
   const urlShortener = useUrlShortener();
   const fileUpload = useFileUpload();
 
@@ -61,29 +62,35 @@ function App() {
   }, [urlShortener.result, fileUpload.result]);
 
   return (
+    <div className="min-h-screen">
+      <SEO />
+      <Hero
+        urlInput={urlInput}
+        setUrlInput={setUrlInput}
+        fileInput={fileInput}
+        setFileInput={setFileInput}
+        isLoading={urlShortener.isLoading || fileUpload.isLoading}
+        resultUrl={urlShortener.result || fileUpload.result}
+        copied={copied}
+        dragOver={dragOver}
+        handleShorten={handleShorten}
+        handleUpload={handleUpload}
+        handleDragOver={handleDragOver}
+        handleDragLeave={handleDragLeave}
+        handleDrop={handleDrop}
+        handleCopy={handleCopy}
+      />
+      <AlertContainer />
+    </div>
+  );
+}
+
+function App() {
+  return (
     <HelmetProvider>
       <AlertProvider>
         <ThemeProvider>
-          <div className="min-h-screen">
-            <SEO />
-            <Hero
-              urlInput={urlInput}
-              setUrlInput={setUrlInput}
-              fileInput={fileInput}
-              setFileInput={setFileInput}
-              isLoading={urlShortener.isLoading || fileUpload.isLoading}
-              resultUrl={urlShortener.result || fileUpload.result}
-              copied={copied}
-              dragOver={dragOver}
-              handleShorten={handleShorten}
-              handleUpload={handleUpload}
-              handleDragOver={handleDragOver}
-              handleDragLeave={handleDragLeave}
-              handleDrop={handleDrop}
-              handleCopy={handleCopy}
-            />
-            <AlertContainer />
-          </div>
+          <AppContent />
         </ThemeProvider>
       </AlertProvider>
     </HelmetProvider>
