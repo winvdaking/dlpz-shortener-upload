@@ -3,84 +3,28 @@ import { HelmetProvider } from "react-helmet-async";
 import Hero from "./components/hero";
 import SEO from "./components/SEO";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { useUrlShortener, useFileUpload } from "./hooks/useApi";
 
 function App() {
   const [urlInput, setUrlInput] = useState("");
   const [fileInput, setFileInput] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [resultUrl, setResultUrl] = useState("");
-  const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+
+  // Hooks pour les appels API
+  const urlShortener = useUrlShortener();
+  const fileUpload = useFileUpload();
 
   // Optimisation: useCallback pour éviter les re-créations de fonctions
   const handleShorten = useCallback(async () => {
     if (!urlInput.trim()) return;
-
-    setIsLoading(true);
-    setError("");
-    setResultUrl("");
-
-    try {
-      const response = await fetch("/api/shorten", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: urlInput.trim() }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Échec de la requête");
-      }
-
-      const data = await response.json();
-      const shortUrl = data.shortUrl || data.url || data.link || "";
-
-      if (!shortUrl) {
-        throw new Error("Réponse invalide du serveur");
-      }
-
-      setResultUrl(shortUrl);
-    } catch (err) {
-      setError(err.message || "Une erreur est survenue");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [urlInput]);
+    await urlShortener.shorten(urlInput.trim());
+  }, [urlInput, urlShortener]);
 
   const handleUpload = useCallback(async () => {
     if (!fileInput) return;
-
-    setIsLoading(true);
-    setError("");
-    setResultUrl("");
-
-    try {
-      const formData = new FormData();
-      formData.append("file", fileInput);
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Échec de l'upload");
-      }
-
-      const data = await response.json();
-      const shortUrl = data.shortUrl || data.url || data.link || "";
-
-      if (!shortUrl) {
-        throw new Error("Réponse invalide du serveur");
-      }
-
-      setResultUrl(shortUrl);
-    } catch (err) {
-      setError(err.message || "Une erreur est survenue");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fileInput]);
+    await fileUpload.upload(fileInput);
+  }, [fileInput, fileUpload]);
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -102,16 +46,17 @@ function App() {
   }, []);
 
   const handleCopy = useCallback(async () => {
-    if (!resultUrl) return;
+    const currentResult = urlShortener.result || fileUpload.result;
+    if (!currentResult) return;
 
     try {
-      await navigator.clipboard.writeText(resultUrl);
+      await navigator.clipboard.writeText(currentResult);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Copy failed:", err);
     }
-  }, [resultUrl]);
+  }, [urlShortener.result, fileUpload.result]);
 
   return (
     <HelmetProvider>
@@ -123,9 +68,9 @@ function App() {
             setUrlInput={setUrlInput}
             fileInput={fileInput}
             setFileInput={setFileInput}
-            isLoading={isLoading}
-            resultUrl={resultUrl}
-            error={error}
+            isLoading={urlShortener.isLoading || fileUpload.isLoading}
+            resultUrl={urlShortener.result || fileUpload.result}
+            error={urlShortener.error || fileUpload.error}
             copied={copied}
             dragOver={dragOver}
             handleShorten={handleShorten}

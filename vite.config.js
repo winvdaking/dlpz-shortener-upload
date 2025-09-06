@@ -37,6 +37,22 @@ export default defineConfig({
     fs: {
       strict: false,
     },
+    // Proxy pour l'API backend
+    proxy: {
+      "/api": {
+        target: "http://localhost:3002",
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy, _options) => {
+          proxy.on("error", (err, _req, _res) => {
+            console.log("Erreur proxy:", err);
+          });
+          proxy.on("proxyReq", (proxyReq, req, _res) => {
+            console.log("Requête proxy:", req.method, req.url);
+          });
+        },
+      },
+    },
   },
   optimizeDeps: {
     include: ["react", "react-dom", "framer-motion", "lucide-react"],
