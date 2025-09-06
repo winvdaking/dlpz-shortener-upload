@@ -14,6 +14,7 @@ FRONTEND_PORT=5173
 
 # Chemins
 PROJECT_ROOT="/var/www/${PROJECT_NAME}"
+SOURCE_DIR="${PROJECT_ROOT}/app"
 FRONTEND_DIR="${PROJECT_ROOT}/frontend"
 BACKEND_DIR="${PROJECT_ROOT}/backend"
 NGINX_CONFIG="/etc/nginx/sites-available/${DOMAIN}"
@@ -93,6 +94,12 @@ create_directories() {
     mkdir -p "${PROJECT_ROOT}/uploads"
     mkdir -p "${PROJECT_ROOT}/data"
     
+    # Vérifier que le répertoire source existe
+    if [ ! -d "${SOURCE_DIR}" ]; then
+        log_error "Le répertoire source ${SOURCE_DIR} n'existe pas. Veuillez cloner le repository d'abord."
+        exit 1
+    fi
+    
     # Permissions
     chown -R www-data:www-data "${PROJECT_ROOT}"
     chmod -R 755 "${PROJECT_ROOT}"
@@ -104,8 +111,8 @@ create_directories() {
 deploy_frontend() {
     log "Déploiement du frontend..."
     
-    # Aller dans le répertoire frontend
-    cd "${FRONTEND_DIR}"
+    # Aller dans le répertoire source du frontend
+    cd "${SOURCE_DIR}"
     
     # Installer les dépendances
     log "Installation des dépendances frontend..."
@@ -126,11 +133,12 @@ deploy_frontend() {
     fi
     
     # Copier les fichiers vers le répertoire de déploiement
-    cp -r dist/* "${PROJECT_ROOT}/frontend/app/dist/"
+    mkdir -p "${FRONTEND_DIR}/app/dist"
+    cp -r dist/* "${FRONTEND_DIR}/app/dist/"
     
     # Permissions
-    chown -R www-data:www-data "${PROJECT_ROOT}/frontend"
-    chmod -R 755 "${PROJECT_ROOT}/frontend"
+    chown -R www-data:www-data "${FRONTEND_DIR}"
+    chmod -R 755 "${FRONTEND_DIR}"
     
     log_success "Frontend déployé avec succès"
 }
@@ -138,6 +146,10 @@ deploy_frontend() {
 # Déployer le backend
 deploy_backend() {
     log "Déploiement du backend..."
+    
+    # Copier les fichiers backend depuis le répertoire source
+    log "Copie des fichiers backend..."
+    cp -r "${SOURCE_DIR}/backend"/* "${BACKEND_DIR}/"
     
     # Aller dans le répertoire backend
     cd "${BACKEND_DIR}"
