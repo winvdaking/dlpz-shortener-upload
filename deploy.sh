@@ -109,7 +109,11 @@ deploy_frontend() {
     
     # Installer les dépendances
     log "Installation des dépendances frontend..."
-    npm ci --production=false
+    if [ -f "package-lock.json" ]; then
+        npm ci --production=false
+    else
+        npm install --production=false
+    fi
     
     # Build de production
     log "Build de production du frontend..."
@@ -140,7 +144,11 @@ deploy_backend() {
     
     # Installer les dépendances
     log "Installation des dépendances backend..."
-    npm ci --production=true
+    if [ -f "package-lock.json" ]; then
+        npm ci --production=true
+    else
+        npm install --production=true
+    fi
     
     # Créer les répertoires nécessaires
     mkdir -p uploads
