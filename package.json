@@ -9,8 +9,8 @@
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "start:backend": "cd backend && npm start",
-    "start:backend:dev": "cd backend && npm run dev"
+    "start:backend": "cd backend && php -S localhost:8000 -t public",
+    "start:backend:dev": "cd backend && php -S localhost:8000 -t public"
   },
   "dependencies": {
     "@paper-design/shaders-react": "^0.0.46",

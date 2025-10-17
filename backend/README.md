@@ -1,195 +1,322 @@
-# Backend dlpz.fr
+# API de Raccourcissement d'URL - Symfony
 
-Backend sécurisé pour le service de raccourcissement d'URL et d'upload de fichiers dlpz.fr.
+Un service de raccourcissement d'URL développé avec Symfony, utilisant le stockage de données en fichiers JSON.
 
-## Fonctionnalités
+## 🚀 Fonctionnalités
 
-- ✅ Raccourcissement d'URL avec stockage JSON
-- ✅ Upload de fichiers avec compression automatique
-- ✅ Compression d'images sans perte de qualité
-- ✅ Système de redirection pour les URLs raccourcies
-- ✅ Statistiques et analytics
-- ✅ **Sécurité renforcée** contre les exécutions malveillantes
-- ✅ Validation stricte des fichiers uploadés
-- ✅ Sanitisation des entrées utilisateur
-- ✅ Rate limiting et protection DDoS
-- ✅ Headers de sécurité stricts
-- ✅ Support multi-fichiers
+- **Raccourcissement d'URL** : Création de codes courts uniques pour les URLs longues
+- **Redirection automatique** : Redirection 301 vers l'URL originale
+- **Gestion des statistiques** : Comptage des clics pour chaque URL raccourcie
+- **API REST** : Interface JSON complète pour toutes les opérations
+- **Stockage sans base de données** : Utilisation de fichiers JSON pour la persistance
+- **Tests automatisés** : Suite de tests unitaires et fonctionnels complète
 
-## 🔒 Sécurité
+## 📋 Prérequis
 
-Ce backend est conçu avec une approche de sécurité "zero-trust" :
+- PHP 8.1 ou supérieur
+- Composer
+- Symfony CLI (optionnel, pour le serveur de développement)
 
-### Protection contre les exécutions malveillantes
+## 🛠️ Installation
 
-- **Validation stricte des types de fichiers** : Seuls les types autorisés sont acceptés
-- **Analyse du contenu** : Détection automatique de code malveillant dans les fichiers
-- **Extensions interdites** : Blocage des extensions dangereuses (.exe, .php, .js, etc.)
-- **Noms de fichiers sécurisés** : Validation des noms de fichiers contre les injections
+1. **Cloner le projet**
+   ```bash
+   git clone <repository-url>
+   cd backend
+   ```
 
-### Validation des fichiers
+2. **Installer les dépendances**
+   ```bash
+   composer install
+   ```
 
-- **Types MIME vérifiés** : Correspondance stricte entre extension et type MIME
-- **Taille limitée** : Limites de taille par type de fichier
-- **Contenu analysé** : Détection de patterns malveillants dans le contenu
-- **Images validées** : Vérification avec Sharp pour s'assurer que c'est une vraie image
+3. **Configurer les variables d'environnement**
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   Éditez le fichier `.env.local` :
+   ```env
+   BASE_URL=https://votre-domaine.com
+   SHORT_CODE_LENGTH=6
+   APP_SECRET=votre-cle-secrete-securisee
+   ```
 
-### Protection des URLs
+4. **Créer le dossier de données**
+   ```bash
+   mkdir -p data
+   chmod 755 data
+   ```
 
-- **URLs privées bloquées** : Interdiction des redirections vers localhost/IPs privées
-- **Domaines suspects filtrés** : Blocage des services de raccourcissement d'URL
-- **Sanitisation** : Nettoyage automatique des URLs
+## 🚀 Démarrage
 
-### Rate Limiting
-
-- **Limites par endpoint** : Restrictions différentes selon le type d'opération
-- **Protection DDoS** : Limitation du nombre de requêtes par IP
-- **Uploads limités** : Maximum 10 uploads par heure par IP
-
-## Installation
-
-1. Installer les dépendances :
-
+### Mode développement
 ```bash
-npm install
+# Avec Symfony CLI
+symfony serve
+
+# Ou avec le serveur PHP intégré
+php -S localhost:8000 -t public
 ```
 
-2. Copier le fichier de configuration :
-
+### Mode production
 ```bash
-cp env.example .env
+# Compiler les assets
+composer dump-env prod
+
+# Configurer le serveur web (Nginx/Apache) pour pointer vers le dossier public/
 ```
 
-3. Modifier les variables d'environnement dans `.env` selon vos besoins.
+## 📚 API Endpoints
 
-4. Démarrer le serveur :
+### 1. Raccourcir une URL
+```http
+POST /api/shorten
+Content-Type: application/json
 
-```bash
-# Mode développement (sans vérifications de sécurité)
-npm run dev
-
-# Mode production sécurisé (avec vérifications)
-npm start
-
-# Vérifications de sécurité uniquement
-npm run security-check
-
-# Mode production sans vérifications (non recommandé)
-npm run start:unsafe
-```
-
-## API Endpoints
-
-### URLs
-
-- `POST /api/url/shorten` - Raccourcir une URL
-- `GET /api/url/:shortId` - Obtenir les infos d'une URL raccourcie
-- `GET /api/url/stats/all` - Statistiques des URLs
-- `DELETE /api/url/:shortId` - Supprimer une URL
-
-### Upload
-
-- `POST /api/upload` - Upload de fichiers
-- `GET /api/upload/download/:fileId` - Télécharger un fichier
-- `GET /api/upload/info/:fileId` - Infos d'un fichier
-- `GET /api/upload/stats` - Statistiques des uploads
-- `DELETE /api/upload/:fileId` - Supprimer un fichier
-
-### Autres
-
-- `GET /:shortId` - Redirection vers l'URL originale
-- `GET /api/health` - Statut du serveur
-
-## Structure des données
-
-### URLs (data/urls.json)
-
-```json
 {
-  "abc123": {
-    "originalUrl": "https://example.com",
-    "shortId": "abc123",
-    "clicks": 0,
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "lastAccessed": null,
-    "ip": "127.0.0.1",
-    "userAgent": "Mozilla/5.0..."
-  }
+  "url": "https://exemple.com/url-tres-longue"
 }
 ```
 
-### Fichiers (data/files.json)
-
+**Réponse :**
 ```json
 {
-  "def456": {
-    "fileId": "def456",
-    "originalName": "image.jpg",
-    "filename": "abc123def456.jpg",
-    "mimetype": "image/jpeg",
-    "size": 1024000,
-    "path": "/uploads/images/abc123def456.jpg",
-    "isImage": true,
-    "compression": {
-      "compressed": true,
-      "originalSize": 1024000,
-      "compressedSize": 512000,
-      "compressionRatio": 50
-    },
-    "uploadDate": "2024-01-01T00:00:00.000Z",
-    "downloads": 0,
-    "lastAccessed": null
-  }
+  "shortCode": "abc123",
+  "shortUrl": "https://votre-domaine.com/abc123",
+  "original": "https://exemple.com/url-tres-longue",
+  "createdAt": "2024-01-01 12:00:00",
+  "clicks": 0
 }
 ```
 
-## Configuration
+### 2. Redirection
+```http
+GET /{shortCode}
+```
+
+**Réponse :** Redirection 301 vers l'URL originale
+
+### 3. Lister toutes les URLs
+```http
+GET /api/urls
+```
+
+**Réponse :**
+```json
+[
+  {
+    "original": "https://exemple.com/url-tres-longue",
+    "short": "abc123",
+    "createdAt": "2024-01-01 12:00:00",
+    "clicks": 5
+  }
+]
+```
+
+### 4. Supprimer une URL
+```http
+DELETE /api/urls/{shortCode}
+```
+
+**Réponse :**
+```json
+{
+  "deleted": true,
+  "message": "URL supprimée avec succès"
+}
+```
+
+### 5. Statistiques d'une URL
+```http
+GET /api/urls/{shortCode}/stats
+```
+
+**Réponse :**
+```json
+{
+  "original": "https://exemple.com/url-tres-longue",
+  "short": "abc123",
+  "createdAt": "2024-01-01 12:00:00",
+  "clicks": 15
+}
+```
+
+### 6. Vérification de santé
+```http
+GET /api/health
+```
+
+**Réponse :**
+```json
+{
+  "status": "OK",
+  "timestamp": "2024-01-01 12:00:00",
+  "service": "URL Shortener API"
+}
+```
+
+## 🧪 Tests
+
+### Exécuter tous les tests
+```bash
+php bin/phpunit
+```
+
+### Tests avec couverture
+```bash
+php bin/phpunit --coverage-html coverage/
+```
+
+### Tests spécifiques
+```bash
+# Tests unitaires
+php bin/phpunit tests/Service/
+php bin/phpunit tests/Repository/
+
+# Tests fonctionnels
+php bin/phpunit tests/Controller/
+```
+
+## 📁 Structure du projet
+
+```
+backend/
+├── config/                 # Configuration Symfony
+├── data/                   # Stockage des données JSON
+│   └── urls.json          # Fichier de données des URLs
+├── public/                 # Point d'entrée web
+├── src/
+│   ├── Controller/        # Contrôleurs API
+│   ├── Entity/           # Entités métier
+│   ├── Repository/       # Gestion des données
+│   └── Service/          # Logique métier
+├── tests/                # Tests automatisés
+└── var/                  # Cache et logs Symfony
+```
+
+## 🔧 Configuration
 
 ### Variables d'environnement
 
-- `PORT` : Port du serveur (défaut: 3002)
-- `NODE_ENV` : Environnement (development/production)
-- `FRONTEND_URL` : URL du frontend pour CORS
-- `RATE_LIMIT_WINDOW_MS` : Fenêtre de rate limiting (ms)
-- `RATE_LIMIT_MAX_REQUESTS` : Nombre max de requêtes par fenêtre
-- `MAX_FILE_SIZE` : Taille max des fichiers (bytes)
-- `MAX_FILES_PER_REQUEST` : Nombre max de fichiers par requête
+| Variable | Description | Défaut |
+|----------|-------------|---------|
+| `BASE_URL` | URL de base pour les raccourcis | `https://dlpz.fr` |
+| `SHORT_CODE_LENGTH` | Longueur des codes courts | `6` |
+| `APP_SECRET` | Clé secrète Symfony | Requis |
 
-### Types de fichiers supportés
+### Configuration du serveur web
 
-**Images :** JPEG, PNG, GIF, WebP, SVG
-**Documents :** PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX
-**Archives :** ZIP, RAR, 7Z
-**Texte :** TXT, CSV
-**Code :** JSON, JS, CSS, HTML
-**Média :** MP3, WAV, MP4, WebM
+#### Nginx
+```nginx
+server {
+    listen 80;
+    server_name votre-domaine.com;
+    root /path/to/backend/public;
+    index index.php;
 
-## Sécurité
+    location / {
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
 
-- Rate limiting (100 requêtes/15min par IP)
-- Validation des types de fichiers
-- Limitation de taille des fichiers (50MB max)
-- Headers de sécurité avec Helmet
-- Validation des URLs
-- Nettoyage automatique des fichiers en cas d'erreur
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+}
+```
 
-## Compression d'images
+#### Apache
+```apache
+<VirtualHost *:80>
+    ServerName votre-domaine.com
+    DocumentRoot /path/to/backend/public
+    
+    <Directory /path/to/backend/public>
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+```
 
-Les images sont automatiquement compressées avec Sharp :
+## 🔒 Sécurité
 
-- Qualité ajustée selon la taille (80-90%)
-- Redimensionnement si > 2048px
-- Formats optimisés (JPEG, PNG, WebP)
-- Conservation de la qualité visuelle
+- Validation stricte des URLs d'entrée
+- Protection contre les injections
+- Gestion des erreurs sécurisée
+- Limitation de la longueur des codes courts
+- Vérification des protocoles (HTTP/HTTPS uniquement)
 
-## Déploiement
+## 📊 Monitoring
 
-1. Configurer les variables d'environnement
-2. Installer les dépendances : `npm install --production`
-3. Démarrer le serveur : `npm start`
+### Logs
+Les logs sont stockés dans `var/log/` et peuvent être configurés via `config/packages/monolog.yaml`.
 
-Le serveur créera automatiquement les dossiers nécessaires :
+### Métriques
+- Nombre total d'URLs raccourcies
+- Nombre de clics par URL
+- Temps de réponse de l'API
 
-- `uploads/images/` - Images uploadées
-- `uploads/files/` - Autres fichiers
-- `data/` - Fichiers JSON de stockage
+## 🚀 Déploiement
+
+### VPS OVH
+
+1. **Préparer le serveur**
+   ```bash
+   sudo apt update
+   sudo apt install nginx php8.3-fpm composer
+   ```
+
+2. **Déployer l'application**
+   ```bash
+   git clone <repository-url> /var/www/url-shortener
+   cd /var/www/url-shortener/backend
+   composer install --no-dev --optimize-autoloader
+   ```
+
+3. **Configurer Nginx** (voir section Configuration)
+
+4. **Configurer PHP-FPM**
+   ```bash
+   sudo systemctl enable nginx php8.3-fpm
+   sudo systemctl start nginx php8.3-fpm
+   ```
+
+5. **Permissions**
+   ```bash
+   sudo chown -R www-data:www-data /var/www/url-shortener
+   sudo chmod -R 755 /var/www/url-shortener
+   sudo chmod -R 777 /var/www/url-shortener/backend/data
+   sudo chmod -R 777 /var/www/url-shortener/backend/var
+   ```
+
+## 🤝 Contribution
+
+1. Fork le projet
+2. Créer une branche feature (`git checkout -b feature/nouvelle-fonctionnalite`)
+3. Commit les changements (`git commit -am 'Ajouter nouvelle fonctionnalité'`)
+4. Push vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
+5. Créer une Pull Request
+
+## 📄 Licence
+
+Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
+
+## 🆘 Support
+
+Pour toute question ou problème :
+- Créer une issue sur GitHub
+- Consulter la documentation Symfony : https://symfony.com/doc
+- Vérifier les logs dans `var/log/`
+
+## 🔄 Changelog
+
+### v1.0.0
+- API de raccourcissement d'URL complète
+- Stockage en fichiers JSON
+- Tests automatisés
+- Documentation complète
+- Support des statistiques
+- Gestion des erreurs robuste
