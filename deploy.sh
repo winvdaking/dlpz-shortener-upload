@@ -99,7 +99,7 @@ update_code() {
         success "Code mis à jour via Git"
     else
         # Clonage initial
-        git clone https://github.com/votre-username/dlpz-shortener.git "$PROJECT_DIR"
+        git clone https://github.com/winvdaking/dlpz-shortener.git "$PROJECT_DIR"
         success "Code cloné depuis Git"
     fi
 }

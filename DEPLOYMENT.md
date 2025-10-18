@@ -15,7 +15,7 @@ Guide complet pour déployer DLPZ Shortener sur un VPS OVH avec Nginx et PHP-FPM
 
 ```bash
 # Cloner le projet
-git clone https://github.com/votre-username/dlpz-shortener.git
+git clone https://github.com/winvdaking/dlpz-shortener.git
 cd dlpz-shortener
 
 # Rendre le script exécutable
@@ -67,7 +67,7 @@ sudo chown -R $USER:www-data /var/www/dlpz.fr
 
 # Cloner le projet
 cd /var/www/dlpz.fr
-git clone https://github.com/votre-username/dlpz-shortener.git .
+git clone https://github.com/winvdaking/dlpz-shortener.git .
 
 # Configuration backend
 cd backend
