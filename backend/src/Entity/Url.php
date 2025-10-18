@@ -70,16 +70,16 @@ class Url
     public function toArray(): array
     {
         return [
+            'code' => $this->shortCode,
             'original' => $this->original,
-            'short' => $this->shortCode,
-            'createdAt' => $this->createdAt->format('Y-m-d H:i:s'),
+            'createdAt' => $this->createdAt->format('Y-m-d\TH:i:s\Z'),
             'clicks' => $this->clicks,
         ];
     }
 
     public static function fromArray(array $data): self
     {
-        $url = new self($data['original'], $data['short']);
+        $url = new self($data['original'], $data['code'] ?? $data['short']);
         $url->setCreatedAt(new \DateTime($data['createdAt']));
         $url->setClicks($data['clicks'] ?? 0);
         return $url;

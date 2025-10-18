@@ -26,37 +26,53 @@ class UrlController extends AbstractController
             $data = json_decode($request->getContent(), true);
 
             if (!isset($data['url']) || empty($data['url'])) {
-                return new JsonResponse([
+                $response = new JsonResponse([
                     'error' => 'Le champ "url" est requis'
                 ], Response::HTTP_BAD_REQUEST);
+            } else {
+                $result = $this->urlShortenerService->shortenUrl($data['url']);
+                $response = new JsonResponse([
+                    'shortUrl' => $result['shortUrl']
+                ], Response::HTTP_CREATED);
             }
 
-            $result = $this->urlShortenerService->shortenUrl($data['url']);
+            // Headers CORS temporaires
+            $response->headers->set('Access-Control-Allow-Origin', '*');
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+            $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 
-            return new JsonResponse([
-                'shortCode' => $result['shortCode'],
-                'shortUrl' => $result['shortUrl'],
-                'original' => $result['original'],
-                'createdAt' => $result['createdAt'],
-                'clicks' => $result['clicks']
-            ], Response::HTTP_CREATED);
+            return $response;
 
         } catch (\InvalidArgumentException $e) {
-            return new JsonResponse([
+            $response = new JsonResponse([
                 'error' => $e->getMessage()
             ], Response::HTTP_BAD_REQUEST);
+            
+            // Headers CORS temporaires
+            $response->headers->set('Access-Control-Allow-Origin', '*');
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+            $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+            
+            return $response;
 
         } catch (\Exception $e) {
-            return new JsonResponse([
+            $response = new JsonResponse([
                 'error' => 'Une erreur interne s\'est produite'
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            
+            // Headers CORS temporaires
+            $response->headers->set('Access-Control-Allow-Origin', '*');
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+            $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+            
+            return $response;
         }
     }
 
-    #[Route('/{shortCode}', name: 'redirect', methods: ['GET'], requirements: ['shortCode' => '[a-zA-Z0-9]{6}'])]
-    public function redirectToUrl(string $shortCode): Response
+    #[Route('/{code}', name: 'redirect', methods: ['GET'], requirements: ['code' => '[a-zA-Z0-9]+'])]
+    public function redirectToUrl(string $code): Response
     {
-        $originalUrl = $this->urlShortenerService->getOriginalUrl($shortCode);
+        $originalUrl = $this->urlShortenerService->getOriginalUrl($code);
 
         if (!$originalUrl) {
             return new JsonResponse([
@@ -73,7 +89,14 @@ class UrlController extends AbstractController
         try {
             $urls = $this->urlShortenerService->getAllUrls();
 
-            return new JsonResponse($urls, Response::HTTP_OK);
+            $response = new JsonResponse($urls, Response::HTTP_OK);
+            
+            // Headers CORS temporaires
+            $response->headers->set('Access-Control-Allow-Origin', '*');
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+            $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+            return $response;
 
         } catch (\Exception $e) {
             return new JsonResponse([
@@ -82,11 +105,11 @@ class UrlController extends AbstractController
         }
     }
 
-    #[Route('/api/urls/{shortCode}', name: 'api_delete_url', methods: ['DELETE'], requirements: ['shortCode' => '[a-zA-Z0-9]{6}'])]
-    public function deleteUrl(string $shortCode): JsonResponse
+    #[Route('/api/urls/{code}', name: 'api_delete_url', methods: ['DELETE'], requirements: ['code' => '[a-zA-Z0-9]+'])]
+    public function deleteUrl(string $code): JsonResponse
     {
         try {
-            $deleted = $this->urlShortenerService->deleteUrl($shortCode);
+            $deleted = $this->urlShortenerService->deleteUrl($code);
 
             if (!$deleted) {
                 return new JsonResponse([
@@ -95,8 +118,7 @@ class UrlController extends AbstractController
             }
 
             return new JsonResponse([
-                'deleted' => true,
-                'message' => 'URL supprimée avec succès'
+                'deleted' => true
             ], Response::HTTP_OK);
 
         } catch (\Exception $e) {
@@ -106,11 +128,11 @@ class UrlController extends AbstractController
         }
     }
 
-    #[Route('/api/urls/{shortCode}/stats', name: 'api_url_stats', methods: ['GET'], requirements: ['shortCode' => '[a-zA-Z0-9]{6}'])]
-    public function getUrlStats(string $shortCode): JsonResponse
+    #[Route('/api/urls/{code}/stats', name: 'api_url_stats', methods: ['GET'], requirements: ['code' => '[a-zA-Z0-9]+'])]
+    public function getUrlStats(string $code): JsonResponse
     {
         try {
-            $stats = $this->urlShortenerService->getUrlStats($shortCode);
+            $stats = $this->urlShortenerService->getUrlStats($code);
 
             if (!$stats) {
                 return new JsonResponse([
@@ -130,10 +152,29 @@ class UrlController extends AbstractController
     #[Route('/api/health', name: 'api_health', methods: ['GET'])]
     public function health(): JsonResponse
     {
-        return new JsonResponse([
+        $response = new JsonResponse([
             'status' => 'OK',
             'timestamp' => (new \DateTime())->format('Y-m-d H:i:s'),
             'service' => 'URL Shortener API'
         ], Response::HTTP_OK);
+        
+        // Headers CORS
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+        
+        return $response;
+    }
+
+    #[Route('/api/{path}', name: 'api_options', methods: ['OPTIONS'], requirements: ['path' => '.*'])]
+    public function options(): Response
+    {
+        $response = new Response();
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+        $response->headers->set('Access-Control-Max-Age', '3600');
+        
+        return $response;
     }
 }

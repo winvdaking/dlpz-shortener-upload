@@ -452,12 +452,12 @@
 
 .theme-toggle-button:hover {
   border-color: rgba(255, 255, 255, 0.4);
-  transform: scale(1.1) rotate(180deg);
+  transform: scale(1.1);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .theme-toggle-button:active {
-  transform: scale(0.95) rotate(180deg);
+  transform: scale(0.95);
 }
 
 .theme-toggle-button svg {
@@ -465,6 +465,15 @@
 }
 
 .theme-toggle-button:hover svg {
-  transform: scale(1.2);
+  transform: scale(1.2) rotate(15deg);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* ===== SCROLLBAR HIDE ===== */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar { 
+  display: none;  /* Safari and Chrome */
 }

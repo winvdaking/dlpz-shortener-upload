@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { shortenUrl, uploadFile, checkApiHealth } from "../config/api";
+import { shortenUrl, getAllUrls, deleteUrl, checkApiHealth } from "../config/api";
 import { useAlert } from "../contexts/AlertContext";
 
 /**
@@ -50,9 +50,9 @@ export const useUrlShortener = () => {
   const [result, setResult] = useState("");
 
   const shorten = useCallback(
-    async (url, customAlias = null) => {
+    async (url) => {
       return await handleApiCall(
-        () => shortenUrl(url, customAlias),
+        () => shortenUrl(url),
         (data) => {
           if (data.success && data.shortUrl) {
             setResult(data.shortUrl);
@@ -80,45 +80,45 @@ export const useUrlShortener = () => {
 };
 
 /**
- * Hook pour l'upload de fichiers
+ * Hook pour gérer les URLs
  */
-export const useFileUpload = () => {
+export const useUrlManager = () => {
   const { isLoading, handleApiCall } = useApi();
-  const [result, setResult] = useState("");
+  const [urls, setUrls] = useState([]);
 
-  const upload = useCallback(
-    async (file) => {
-      return await handleApiCall(
-        () => uploadFile(file),
-        (data) => {
-          if (data.success && data.files && data.files[0]) {
-            const uploadedFile = data.files[0];
-            const fileUrl = uploadedFile.previewUrl || uploadedFile.downloadUrl;
-            if (fileUrl) {
-              setResult(fileUrl);
-            } else {
-              throw new Error("URL du fichier non disponible");
-            }
-          } else {
-            throw new Error(data.message || "Échec de l'upload");
-          }
-        },
-        null,
-        "Fichier uploadé avec succès !"
-      );
-    },
-    [handleApiCall]
-  );
+  const loadUrls = useCallback(async () => {
+    return await handleApiCall(
+      () => getAllUrls(),
+      (data) => {
+        if (data.success) {
+          setUrls(data.urls || []);
+        } else {
+          throw new Error(data.message || "Échec du chargement");
+        }
+      }
+    );
+  }, [handleApiCall]);
 
-  const clearResult = useCallback(() => {
-    setResult("");
-  }, []);
+  const removeUrl = useCallback(async (code) => {
+    return await handleApiCall(
+      () => deleteUrl(code),
+      (data) => {
+        if (data.success) {
+          setUrls(prev => prev.filter(url => url.code !== code));
+        } else {
+          throw new Error(data.message || "Échec de la suppression");
+        }
+      },
+      null,
+      "URL supprimée avec succès !"
+    );
+  }, [handleApiCall]);
 
   return {
     isLoading,
-    result,
-    upload,
-    clearResult,
+    urls,
+    loadUrls,
+    removeUrl,
   };
 };
 

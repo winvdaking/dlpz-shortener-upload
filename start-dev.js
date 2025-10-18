@@ -71,8 +71,8 @@ const startProcess = (command, args, cwd, name, color) => {
 
 // Démarrer le backend
 const backendProcess = startProcess(
-  "npm",
-  ["run", "dev"],
+  "php",
+  ["-S", "localhost:8000", "-t", "public", "index.php"],
   backendDir,
   "Backend",
   "green"
@@ -103,6 +103,6 @@ setTimeout(() => {
 
 console.log("\n✅ Services démarrés !");
 console.log("📱 Frontend: http://localhost:5173");
-console.log("🔧 Backend: http://localhost:3002");
-console.log("🔍 API Health: http://localhost:3002/api/health");
+console.log("🔧 Backend: http://localhost:8000");
+console.log("🔍 API Health: http://localhost:8000/api/health");
 console.log("\n💡 Appuyez sur Ctrl+C pour arrêter tous les services\n");

@@ -93,8 +93,11 @@ class UrlShortenerServiceTest extends TestCase
     {
         $invalidUrl = 'not-a-valid-url';
         
+        $violation = $this->createMock(\Symfony\Component\Validator\ConstraintViolation::class);
+        $violation->method('getMessage')->willReturn('URL invalide');
+        
         $violations = new ConstraintViolationList();
-        $violations->add($this->createMock(\Symfony\Component\Validator\ConstraintViolation::class));
+        $violations->add($violation);
         
         $this->validator
             ->expects($this->once())
@@ -190,7 +193,7 @@ class UrlShortenerServiceTest extends TestCase
 
         $this->assertCount(2, $result);
         $this->assertArrayHasKey('original', $result[0]);
-        $this->assertArrayHasKey('short', $result[0]);
+        $this->assertArrayHasKey('code', $result[0]);
         $this->assertArrayHasKey('createdAt', $result[0]);
         $this->assertArrayHasKey('clicks', $result[0]);
     }
@@ -226,7 +229,7 @@ class UrlShortenerServiceTest extends TestCase
 
         $this->assertIsArray($result);
         $this->assertEquals('https://example.com', $result['original']);
-        $this->assertEquals('abc123', $result['short']);
+        $this->assertEquals('abc123', $result['code']);
         $this->assertEquals(10, $result['clicks']);
     }
 }

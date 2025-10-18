@@ -7,17 +7,14 @@ const API_CONFIG = {
   // URL de base du backend
   BASE_URL:
     import.meta.env.VITE_API_URL ||
-    (import.meta.env.DEV ? "" : "http://localhost:3002"),
+    (import.meta.env.DEV ? "http://localhost:8000" : "https://dlpz.fr"),
 
   // Endpoints
   ENDPOINTS: {
-    URL_SHORTEN: "/api/url/shorten",
-    URL_INFO: "/api/url",
-    URL_STATS: "/api/url/stats/all",
-    UPLOAD: "/api/upload",
-    UPLOAD_INFO: "/api/upload/info",
-    UPLOAD_DOWNLOAD: "/api/upload/download",
-    UPLOAD_STATS: "/api/upload/stats",
+    URL_SHORTEN: "/api/shorten",
+    URL_INFO: "/api/urls",
+    URL_STATS: "/api/urls",
+    URL_DELETE: "/api/urls",
     HEALTH: "/api/health",
   },
 
@@ -76,16 +73,19 @@ export const apiRequest = async (url, options = {}) => {
 /**
  * Raccourcir une URL
  */
-export const shortenUrl = async (url, customAlias = null) => {
+export const shortenUrl = async (url) => {
   const requestBody = { url };
-  if (customAlias) {
-    requestBody.customAlias = customAlias;
-  }
 
-  return await apiRequest(buildApiUrl(API_CONFIG.ENDPOINTS.URL_SHORTEN), {
+  const response = await apiRequest(buildApiUrl(API_CONFIG.ENDPOINTS.URL_SHORTEN), {
     method: "POST",
     body: JSON.stringify(requestBody),
   });
+
+  // Adapter la réponse du backend Symfony au format attendu par le frontend
+  return {
+    success: true,
+    shortUrl: response.shortUrl,
+  };
 };
 
 /**
@@ -98,63 +98,49 @@ export const getUrlInfo = async (shortId) => {
 };
 
 /**
- * Obtenir les statistiques des URLs
+ * Obtenir toutes les URLs
  */
-export const getUrlStats = async () => {
-  return await apiRequest(buildApiUrl(API_CONFIG.ENDPOINTS.URL_STATS));
+export const getAllUrls = async () => {
+  const response = await apiRequest(buildApiUrl(API_CONFIG.ENDPOINTS.URL_STATS));
+  
+  // Adapter la réponse du backend Symfony
+  return {
+    success: true,
+    urls: response,
+    total: response.length,
+  };
 };
 
 /**
- * Uploader un fichier
+ * Supprimer une URL
  */
-export const uploadFile = async (file) => {
-  const formData = new FormData();
-  formData.append("files", file);
-
-  return await apiRequest(buildApiUrl(API_CONFIG.ENDPOINTS.UPLOAD), {
-    method: "POST",
-    headers: {}, // Laisser le navigateur définir Content-Type pour FormData
-    body: formData,
-  });
-};
-
-/**
- * Uploader plusieurs fichiers
- */
-export const uploadFiles = async (files) => {
-  const formData = new FormData();
-  files.forEach((file) => {
-    formData.append("files", file);
-  });
-
-  return await apiRequest(buildApiUrl(API_CONFIG.ENDPOINTS.UPLOAD), {
-    method: "POST",
-    headers: {}, // Laisser le navigateur définir Content-Type pour FormData
-    body: formData,
-  });
-};
-
-/**
- * Obtenir les informations d'un fichier
- */
-export const getFileInfo = async (fileId) => {
-  return await apiRequest(
-    buildApiUrl(`${API_CONFIG.ENDPOINTS.UPLOAD_INFO}/${fileId}`)
+export const deleteUrl = async (shortCode) => {
+  const response = await apiRequest(
+    buildApiUrl(`${API_CONFIG.ENDPOINTS.URL_DELETE}/${shortCode}`),
+    {
+      method: "DELETE",
+    }
   );
-};
-
-/**
- * Obtenir les statistiques des uploads
- */
-export const getUploadStats = async () => {
-  return await apiRequest(buildApiUrl(API_CONFIG.ENDPOINTS.UPLOAD_STATS));
+  
+  return {
+    success: true,
+    deleted: response.deleted,
+  };
 };
 
 /**
  * Vérifier la santé de l'API
  */
 export const checkApiHealth = async () => {
-  return await apiRequest(buildApiUrl(API_CONFIG.ENDPOINTS.HEALTH));
+  const response = await apiRequest(buildApiUrl(API_CONFIG.ENDPOINTS.HEALTH));
+  
+  // Adapter la réponse du backend Symfony
+  return {
+    success: true,
+    status: response.status,
+    service: response.service,
+    timestamp: response.timestamp,
+  };
 };
 
 export default API_CONFIG;

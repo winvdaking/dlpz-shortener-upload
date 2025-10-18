@@ -43,5 +43,8 @@
         <server name="SYMFONY_PHPUNIT_REMOVE" value="" />
         <server name="SYMFONY_PHPUNIT_VERSION" value="11.0" />
         <env name="KERNEL_CLASS" value="App\Kernel" />
+        <env name="APP_SECRET" value="test-secret-key" />
+        <env name="BASE_URL" value="https://test.dlpz.fr" />
+        <env name="SHORT_CODE_LENGTH" value="6" />
     </php>
 </phpunit>

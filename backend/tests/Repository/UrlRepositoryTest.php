@@ -15,7 +15,7 @@ class UrlRepositoryTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->testDataFile = sys_get_temp_dir() . '/test_urls.json';
+        $this->testDataFile = sys_get_temp_dir() . '/test_project/data/urls.json';
         $this->filesystem = new Filesystem();
         
         // Nettoyer le fichier de test s'il existe
@@ -23,7 +23,7 @@ class UrlRepositoryTest extends TestCase
             $this->filesystem->remove($this->testDataFile);
         }
         
-        $this->urlRepository = new UrlRepository(sys_get_temp_dir());
+        $this->urlRepository = new UrlRepository(sys_get_temp_dir() . '/test_project');
     }
 
     protected function tearDown(): void

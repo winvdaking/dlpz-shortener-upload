@@ -1,38 +1,33 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { MeshGradient, PulsingBorder } from "@paper-design/shaders-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { MeshGradient, PulsingBorder } from '@paper-design/shaders-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Link,
-  Upload,
   Zap,
   Sparkles,
   ExternalLink,
   Copy,
   Check,
   Lock,
-  FileUp,
-} from "lucide-react";
-import ThemeToggle from "./theme-toggle";
-import { useTheme } from "../contexts/ThemeContext";
+  Globe,
+  Eye,
+} from 'lucide-react';
+import ThemeToggle from './theme-toggle';
+import { useTheme } from '../contexts/ThemeContext';
+import UrlForm from './UrlForm';
+import AllUrlsModal from './AllUrlsModal';
 
 export default function Hero({
-  urlInput,
-  setUrlInput,
-  fileInput,
-  setFileInput,
   isLoading,
   resultUrl,
   copied,
-  dragOver,
   handleShorten,
-  handleUpload,
-  handleDragOver,
-  handleDragLeave,
-  handleDrop,
   handleCopy,
+  recentUrls = [],
 }) {
   const containerRef = useRef(null);
   const [isActive, setIsActive] = useState(false);
+  const [isAllUrlsModalOpen, setIsAllUrlsModalOpen] = useState(false);
   const { theme, getBackgroundClass, getThemeClass } = useTheme();
 
   // Optimisation: useCallback pour éviter les re-créations de fonctions
@@ -42,14 +37,14 @@ export default function Hero({
   useEffect(() => {
     const container = containerRef.current;
     if (container) {
-      container.addEventListener("mouseenter", handleMouseEnter);
-      container.addEventListener("mouseleave", handleMouseLeave);
+      container.addEventListener('mouseenter', handleMouseEnter);
+      container.addEventListener('mouseleave', handleMouseLeave);
     }
 
     return () => {
       if (container) {
-        container.removeEventListener("mouseenter", handleMouseEnter);
-        container.removeEventListener("mouseleave", handleMouseLeave);
+        container.removeEventListener('mouseenter', handleMouseEnter);
+        container.removeEventListener('mouseleave', handleMouseLeave);
       }
     };
   }, [handleMouseEnter, handleMouseLeave]);
@@ -57,21 +52,21 @@ export default function Hero({
   // Optimisation: useMemo pour les valeurs calculées
   const meshColors = useMemo(
     () =>
-      theme === "light"
-        ? ["#f8fafc", "#e2e8f0", "#06b6d4", "#f97316"]
-        : ["#000000", "#ffffff", "#06b6d4", "#f97316"],
+      theme === 'light'
+        ? ['#f8fafc', '#e2e8f0', '#06b6d4', '#f97316']
+        : ['#000000', '#ffffff', '#06b6d4', '#f97316'],
     [theme]
   );
 
   const pulsingColors = useMemo(
     () => [
-      "#06b6d4",
-      "#0891b2",
-      "#f97316",
-      "#00FF88",
-      "#FFD700",
-      "#FF6B35",
-      "#ffffff",
+      '#06b6d4',
+      '#0891b2',
+      '#f97316',
+      '#00FF88',
+      '#FFD700',
+      '#FF6B35',
+      '#ffffff',
     ],
     []
   );
@@ -79,7 +74,7 @@ export default function Hero({
   return (
     <div
       ref={containerRef}
-      className={`h-screen relative overflow-hidden flex flex-col ${getThemeClass()}`}
+      className={`min-h-screen relative overflow-hidden flex flex-col ${getThemeClass()}`}
     >
       <div id="background_noisy" className="absolute inset-0 w-full h-full" />
 
@@ -120,15 +115,16 @@ export default function Hero({
       />
 
       {/* Header/Navbar */}
-      <header className="relative z-20 flex items-center justify-between p-6 flex-shrink-0">
+      <header className="relative z-20 flex items-center justify-between p-6 flex-shrink-0 w-full">
+        {/* Logo à gauche */}
         <motion.div
           className="flex items-center group cursor-pointer"
           whileHover={{ scale: 1.02 }}
-          transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 10 }}
         >
           <motion.div
             className="text-xl font-light text-white group-hover:drop-shadow-lg transition-all duration-300 relative"
-            style={{ filter: "url(#logo-glow)" }}
+            style={{ filter: 'url(#logo-glow)' }}
             whileHover={{ scale: 1.05 }}
           >
             <span className="block tracking-wider font-light dark:text-white/50 text-black/50">
@@ -137,7 +133,7 @@ export default function Hero({
           </motion.div>
         </motion.div>
 
-        {/* Navigation */}
+        {/* Navigation au centre */}
         <nav className="flex items-center space-x-2">
           <a
             href="#"
@@ -147,6 +143,7 @@ export default function Hero({
           </a>
         </nav>
 
+        {/* ThemeToggle à droite */}
         <ThemeToggle />
       </header>
 
@@ -156,7 +153,7 @@ export default function Hero({
           {/* Badge */}
           <motion.div
             className="inline-flex items-center px-4 py-2 rounded-full bg-white/5 backdrop-blur-xl mb-6 relative border border-white/15"
-            style={{ filter: "url(#glass-effect)" }}
+            style={{ filter: 'url(#glass-effect)' }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
@@ -168,38 +165,25 @@ export default function Hero({
             </span>
           </motion.div>
 
-          {/* Title */}
-          <motion.h1
-            className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-none tracking-tight"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
-            <motion.span className="block font-light text-white/90 text-3xl md:text-4xl lg:text-5xl mb-2 tracking-wider">
-              URL Shortener & File Upload
-            </motion.span>
-          </motion.h1>
-
           {/* Subtitle */}
           <motion.p
-            className="text-lg font-light text-white/70 mb-12 leading-relaxed max-w-2xl mx-auto"
+            className="text-lg font-light text-white/70 mb-8 leading-relaxed max-w-2xl mx-auto"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
           >
-            Shorten your URLs and upload your files with ease
+            Raccourcissez vos URLs rapidement et facilement avec React et Symfony
           </motion.p>
 
-          {/* Cards Container */}
+          {/* URL Shortener Form */}
           <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto"
+            className="max-w-xl mx-auto"
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1.0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
           >
-            {/* URL Shortener Card */}
             <motion.div
-              className="group relative rounded-2xl bg-white/10 p-6 backdrop-blur-xl transition-all duration-300 hover:bg-white/15"
+              className="group relative rounded-xl bg-white/10 p-6 backdrop-blur-xl transition-all duration-300 hover:bg-white/15"
               whileHover={{ y: -2 }}
               transition={{ duration: 0.2 }}
             >
@@ -214,89 +198,53 @@ export default function Hero({
                 </motion.div>
 
                 {/* Title */}
-                <h3 className="text-xl font-semibold text-white mb-4">
-                  URL Shortener
+                <h3 className="text-xl font-semibold text-white mb-4 text-center">
+                  Raccourcir une URL
                 </h3>
 
-                {/* Input */}
-                <input
-                  type="url"
-                  placeholder="Enter your URL"
-                  value={urlInput}
-                  onChange={(e) => setUrlInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleShorten()}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent transition-all duration-200"
-                />
-
-                {/* Button */}
-                <motion.button
-                  onClick={handleShorten}
-                  disabled={!urlInput.trim() || isLoading}
-                  className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-white to-white text-black font-medium rounded-lg transition-all duration-200 hover:from-white hover:to-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {isLoading ? (
-                    <>
-                      <motion.div
-                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                        animate={{ rotate: 360 }}
-                        transition={{
-                          duration: 1,
-                          repeat: Infinity,
-                          ease: "linear",
-                        }}
-                      />
-                      <span className="text-white/80">Generating</span>
-                    </>
-                  ) : (
-                    <>
-                      <Link className="w-4 h-4" />
-                      Shorten
-                    </>
-                  )}
-                </motion.button>
+                {/* Form */}
+                <UrlForm onSubmit={handleShorten} isLoading={isLoading} />
 
                 {/* Result */}
                 <AnimatePresence>
                   {resultUrl && (
                     <motion.div
-                      className="mt-4 p-4 bg-white/10 rounded-lg border border-white/20"
+                      className="mt-4 p-3 bg-white/10 rounded-lg border border-white/20"
                       initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
+                      animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-green-400">
-                          <Sparkles className="w-4 h-4" />
-                          URL shortened successfully
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-green-400 text-sm">
+                          <Sparkles className="w-3 h-3" />
+                          URL raccourcie avec succès !
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                           <a
                             href={resultUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="flex-1 truncate text-cyan-400 hover:text-cyan-300 underline flex items-center gap-1 transition-colors duration-200"
+                            className="flex-1 truncate text-cyan-400 hover:text-cyan-300 underline flex items-center gap-1 transition-colors duration-200 text-sm"
                           >
                             {resultUrl}
                             <ExternalLink className="w-3 h-3" />
                           </a>
                           <motion.button
                             onClick={handleCopy}
-                            className="px-3 py-1 bg-white/10 border border-white/20 rounded text-sm hover:bg-white/20 transition-colors duration-200 flex items-center gap-1"
+                            className="px-2 py-1 bg-white/10 border border-white/20 rounded text-xs hover:bg-white/20 transition-colors duration-200 flex items-center gap-1"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                           >
                             {copied ? (
                               <>
                                 <Check className="w-3 h-3" />
-                                Copied
+                                Copié
                               </>
                             ) : (
                               <>
                                 <Copy className="w-3 h-3" />
-                                Copy
+                                Copier
                               </>
                             )}
                           </motion.button>
@@ -305,198 +253,78 @@ export default function Hero({
                     </motion.div>
                   )}
                 </AnimatePresence>
-
-                {/* Example Box */}
-                <div className="mt-6 p-4 bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg font-mono text-sm">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-orange-400">→</span>
-                      <span className="text-white/60 truncate">
-                        https://www.google.com/url?q=https://www.google.com&sa=D&source=web&cd=&ved=2ahUKEwj...
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-green-400">→</span>
-                        <span className="text-green-400 font-semibold">
-                          dlpz.fr/abc123
-                        </span>
-                      </div>
-                      <Zap className="w-3 h-3" />
-                    </div>
-                    <div className="flex items-center gap-2 pt-2 border-t border-white/10">
-                      <Lock className="w-3 h-3" />
-                      <span className="text-white/60">Sécurisé et anonyme</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* File Upload Card */}
-            <motion.div
-              className="group relative rounded-2xl bg-white/5 p-6 backdrop-blur-xl transition-all duration-300 hover:bg-white/10"
-              whileHover={{ y: -2 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div className="relative z-10">
-                {/* Icon */}
-                <motion.div
-                  className="mx-auto mb-4 w-12 h-12 rounded-full flex items-center justify-center bg-white/10"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Upload className="w-6 h-6 text-white" />
-                </motion.div>
-
-                {/* Title */}
-                <h3 className="text-xl font-semibold text-white mb-2">
-                  File Upload
-                </h3>
-
-                {/* Description */}
-                <p className="text-sm text-slate-400 mb-4">
-                  Upload your files to the server
-                </p>
-
-                {/* Drop Zone */}
-                <div
-                  className={`w-full p-6 border-2 border-dashed border-white/20 rounded-lg text-center cursor-pointer transition-all duration-200 hover:border-white/40 hover:bg-white/5 ${
-                    dragOver ? "border-white/40 bg-white/5" : ""
-                  }`}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  onClick={() => document.getElementById("file-input").click()}
-                >
-                  <motion.div
-                    animate={{ scale: dragOver ? 1.02 : 1 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Upload className="w-8 h-8 mx-auto mb-2 text-slate-400" />
-                    <p className="text-sm text-slate-300">
-                      Drop your files here or click to upload
-                    </p>
-                    {fileInput && (
-                      <p className="text-xs text-white mt-2">
-                        Selected: {fileInput.name}
-                      </p>
-                    )}
-                  </motion.div>
-                </div>
-
-                {/* Hidden File Input */}
-                <input
-                  id="file-input"
-                  type="file"
-                  onChange={(e) => setFileInput(e.target.files?.[0] ?? null)}
-                  className="hidden"
-                />
-
-                {/* Button */}
-                <motion.button
-                  onClick={handleUpload}
-                  disabled={!fileInput || isLoading}
-                  className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-white to-white text-black font-medium rounded-lg transition-all duration-200 hover:from-white hover:to-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {isLoading ? (
-                    <>
-                      <motion.div
-                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                        animate={{ rotate: 360 }}
-                        transition={{
-                          duration: 1,
-                          repeat: Infinity,
-                          ease: "linear",
-                        }}
-                      />
-                      <span className="text-white/80">Uploading</span>
-                      <motion.span
-                        className="text-white/80"
-                        animate={{ opacity: [1, 0] }}
-                        transition={{
-                          duration: 1.5,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
-                      >
-                        ...
-                      </motion.span>
-                    </>
-                  ) : (
-                    <>
-                      <FileUp className="w-4 h-4" />
-                      Upload
-                    </>
-                  )}
-                </motion.button>
-
-                {/* Result */}
-                <AnimatePresence>
-                  {resultUrl && (
-                    <motion.div
-                      className="mt-4 p-4 bg-white/10 rounded-lg border border-white/20"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-green-400">
-                          <Sparkles className="w-4 h-4" />
-                          File uploaded successfully
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <a
-                            href={resultUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex-1 truncate text-orange-400 hover:text-orange-300 underline flex items-center gap-1 transition-colors duration-200"
-                          >
-                            {resultUrl}
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                          <motion.button
-                            onClick={handleCopy}
-                            className="px-3 py-1 bg-white/10 border border-white/20 rounded text-sm hover:bg-white/20 transition-colors duration-200 flex items-center gap-1"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            {copied ? (
-                              <>
-                                <Check className="w-3 h-3" />
-                                Copied
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="w-3 h-3" />
-                                Copy
-                              </>
-                            )}
-                          </motion.button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div className="mt-6 p-4 bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg font-mono text-sm dark:border-white/10 dark:bg-white/5">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-orange-400">
-                        <Sparkles className="w-4 h-4" />
-                      </span>
-                      <span className="text-white/60 truncate">
-                        Short URL and preview !
-                      </span>
-                    </div>
-                  </div>
-                </div>
               </div>
             </motion.div>
           </motion.div>
+
+          {/* Carrousel des raccourcis récents */}
+          <motion.div
+            className="mt-8 max-w-4xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
+            <div className="text-center mb-4">
+              <h4 className="text-sm font-medium text-white/70 mb-2">Raccourcis récents</h4>
+            </div>
+            <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
+              {/* 3 derniers raccourcis */}
+              {recentUrls.length > 0 ? recentUrls.slice(0, 5).map((url, index) => {
+                const getDomain = (urlString) => {
+                  try {
+                    const domain = new window.URL(urlString).hostname;
+                    return domain.replace('www.', '');
+                  } catch {
+                    return urlString.length > 20 ? urlString.substring(0, 20) + '...' : urlString;
+                  }
+                };
+
+                return (
+                  <motion.div
+                    key={url.code}
+                    className="flex-shrink-0 bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10 hover:bg-white/10 transition-all duration-200 min-w-[140px] cursor-pointer"
+                    whileHover={{ scale: 1.02 }}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1 + index * 0.1 }}
+                    onClick={() => window.open(url.shortUrl || `http://localhost:8000/${url.code}`, '_blank')}
+                  >
+                    <div className="text-center">
+                      <div className="flex items-center justify-center mb-2">
+                        <Globe className="w-4 h-4 text-blue-400 mr-1" />
+                        <span className="text-xs text-white/80 truncate">{getDomain(url.original)}</span>
+                      </div>
+                      <div className="text-xs text-cyan-400 font-mono mb-1">dlpz.fr/{url.code}</div>
+                      <div className="text-xs text-white/50">{url.clicks} clic{url.clicks > 1 ? 's' : ''}</div>
+                    </div>
+                  </motion.div>
+                );
+              }) : (
+                <div className="flex items-center justify-center w-full py-8">
+                  <p className="text-white/50 text-sm">Aucun raccourci récent</p>
+                </div>
+              )}
+            </div>
+            
+            {/* Bouton Voir tous les raccourcis */}
+            {recentUrls.length > 0 && (
+              <motion.div
+                className="text-center mt-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 1.2 }}
+              >
+                <button
+                  onClick={() => setIsAllUrlsModalOpen(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-sm font-medium text-white/80 hover:text-white transition-all duration-200 backdrop-blur-sm"
+                >
+                  <Eye className="w-4 h-4" />
+                  Voir tous les raccourcis ({recentUrls.length})
+                </button>
+              </motion.div>
+            )}
+          </motion.div>
+
         </div>
       </main>
 
@@ -510,7 +338,7 @@ export default function Hero({
         </div>
 
         <p className="text-black/50 dark:text-white/50">
-          dlpz.fr © {new Date().getFullYear()} - Tous droits réservés{" "}
+          dlpz.fr © {new Date().getFullYear()} - Tous droits réservés{' '}
           <a
             href="https://dorianlopez.fr"
             target="_blank"
@@ -543,9 +371,9 @@ export default function Hero({
             rotation={0}
             frame={9161408.251009725}
             style={{
-              width: "60px",
-              height: "60px",
-              borderRadius: "50%",
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
             }}
           />
 
@@ -557,9 +385,9 @@ export default function Hero({
             transition={{
               duration: 30,
               repeat: Number.POSITIVE_INFINITY,
-              ease: "linear",
+              ease: 'linear',
             }}
-            style={{ transform: "scale(1.6)" }}
+            style={{ transform: 'scale(1.6)' }}
           >
             <defs>
               <path
@@ -575,6 +403,13 @@ export default function Hero({
           </motion.svg>
         </div>
       </div>
+
+      {/* Modal Tous les raccourcis */}
+      <AllUrlsModal
+        urls={recentUrls}
+        isOpen={isAllUrlsModalOpen}
+        onClose={() => setIsAllUrlsModalOpen(false)}
+      />
     </div>
   );
 }

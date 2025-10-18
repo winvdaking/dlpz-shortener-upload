@@ -1,1 +1,37 @@
-[]
+[
+    {
+        "code": "4RpFpU",
+        "original": "https:\/\/example.com",
+        "shortUrl": "http:\/\/localhost:8000\/4RpFpU",
+        "createdAt": "2025-01-18T08:59:36Z",
+        "clicks": 1
+    },
+    {
+        "code": "abc123",
+        "original": "https:\/\/github.com",
+        "shortUrl": "http:\/\/localhost:8000\/abc123",
+        "createdAt": "2025-01-18T09:00:00Z",
+        "clicks": 5
+    },
+    {
+        "code": "def456",
+        "original": "https:\/\/stackoverflow.com",
+        "shortUrl": "http:\/\/localhost:8000\/def456",
+        "createdAt": "2025-01-18T09:01:00Z",
+        "clicks": 13
+    },
+    {
+        "code": "ghi789",
+        "original": "https:\/\/youtube.com",
+        "shortUrl": "http:\/\/localhost:8000\/ghi789",
+        "createdAt": "2025-01-18T09:02:00Z",
+        "clicks": 8
+    },
+    {
+        "code": "jkl012",
+        "original": "https:\/\/twitter.com",
+        "shortUrl": "http:\/\/localhost:8000\/jkl012",
+        "createdAt": "2025-01-18T09:03:00Z",
+        "clicks": 3
+    }
+]

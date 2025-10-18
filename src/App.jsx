@@ -1,85 +1,68 @@
-import { useState, useCallback } from "react";
-import { HelmetProvider } from "react-helmet-async";
-import Hero from "./components/hero";
-import SEO from "./components/SEO";
-import AlertContainer from "./components/AlertContainer";
-import { ThemeProvider } from "./contexts/ThemeContext";
-import { AlertProvider } from "./contexts/AlertContext";
-import { useUrlShortener, useFileUpload } from "./hooks/useApi";
+import { useState, useEffect } from 'react';
+import { HelmetProvider } from 'react-helmet-async';
+import SEO from './components/SEO';
+import AlertContainer from './components/AlertContainer';
+import Hero from './components/hero';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { AlertProvider } from './contexts/AlertContext';
+import { useUrlShortener, useUrlManager } from './hooks/useApi';
 
 // Composant interne qui utilise les hooks
 function AppContent() {
-  const [urlInput, setUrlInput] = useState("");
-  const [fileInput, setFileInput] = useState(null);
+  const [showResult, setShowResult] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
-
-  // Hooks pour les appels API - maintenant dans le bon contexte
+  
   const urlShortener = useUrlShortener();
-  const fileUpload = useFileUpload();
+  const urlManager = useUrlManager();
 
-  // Optimisation: useCallback pour éviter les re-créations de fonctions
-  const handleShorten = useCallback(async () => {
-    if (!urlInput.trim()) return;
-    await urlShortener.shorten(urlInput.trim());
-  }, [urlInput, urlShortener]);
+  // Charger les URLs au démarrage
+  useEffect(() => {
+    urlManager.loadUrls();
+  }, [urlManager]);
 
-  const handleUpload = useCallback(async () => {
-    if (!fileInput) return;
-    await fileUpload.upload(fileInput);
-  }, [fileInput, fileUpload]);
-
-  const handleDragOver = useCallback((e) => {
-    e.preventDefault();
-    setDragOver(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e) => {
-    e.preventDefault();
-    setDragOver(false);
-  }, []);
-
-  const handleDrop = useCallback((e) => {
-    e.preventDefault();
-    setDragOver(false);
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      setFileInput(files[0]);
+  const handleShorten = async (url) => {
+    try {
+      await urlShortener.shorten(url);
+      setShowResult(true);
+      // Recharger la liste des URLs
+      await urlManager.loadUrls();
+    } catch (error) {
+      console.error('Erreur lors du raccourcissement:', error);
     }
-  }, []);
+  };
 
-  const handleCopy = useCallback(async () => {
-    const currentResult = urlShortener.result || fileUpload.result;
-    if (!currentResult) return;
+  const handleCopy = async () => {
+    if (!urlShortener.result) return;
 
     try {
-      await navigator.clipboard.writeText(currentResult);
+      await navigator.clipboard.writeText(urlShortener.result);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Copy failed:", err);
+      console.error('Erreur lors de la copie:', err);
     }
-  }, [urlShortener.result, fileUpload.result]);
+  };
+
+  const handleNewUrl = () => {
+    setShowResult(false);
+    urlShortener.clearResult();
+  };
 
   return (
     <div className="min-h-screen">
       <SEO />
+      
+      {/* Hero Section */}
       <Hero
-        urlInput={urlInput}
-        setUrlInput={setUrlInput}
-        fileInput={fileInput}
-        setFileInput={setFileInput}
-        isLoading={urlShortener.isLoading || fileUpload.isLoading}
-        resultUrl={urlShortener.result || fileUpload.result}
+        isLoading={urlShortener.isLoading}
+        resultUrl={urlShortener.result}
         copied={copied}
-        dragOver={dragOver}
         handleShorten={handleShorten}
-        handleUpload={handleUpload}
-        handleDragOver={handleDragOver}
-        handleDragLeave={handleDragLeave}
-        handleDrop={handleDrop}
         handleCopy={handleCopy}
+        recentUrls={urlManager.urls}
       />
+
+
       <AlertContainer />
     </div>
   );

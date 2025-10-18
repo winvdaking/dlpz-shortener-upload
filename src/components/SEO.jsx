@@ -2,9 +2,9 @@ import { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 
 export default function SEO({
-  title = 'dlpz.fr - URL Shortener & File Upload Service | Dorian Lopez',
-  description = 'Shorten your URLs and upload your files easily with dlpz.fr. Fast, secure and free service created by Dorian Lopez.',
-  keywords = 'url shortener, link shortener, file upload, dlpz, dorian lopez, short link, file sharing',
+  title = 'DLPZ Shortener - Raccourcisseur d\'URLs | Dorian Lopez',
+  description = 'Raccourcissez vos URLs rapidement et facilement avec DLPZ Shortener. Service gratuit, sécurisé et moderne créé par Dorian Lopez.',
+  keywords = 'raccourcisseur url, raccourcir lien, url court, dlpz, dorian lopez, lien court, raccourcissement url',
   image = 'https://dorianlopez.fr/avatar.png',
   url = 'https://dlpz.fr',
   type = 'website',
@@ -141,11 +141,11 @@ export default function SEO({
             priceCurrency: 'EUR',
           },
           featureList: [
-            'URL Shortening',
-            'File Upload',
-            'Modern Interface',
-            'Dark/Light Theme',
-            'Responsive Design',
+            'Raccourcissement d\'URLs',
+            'Interface moderne',
+            'Thème sombre/clair',
+            'Design responsive',
+            'API REST',
           ],
         })}
       </script>

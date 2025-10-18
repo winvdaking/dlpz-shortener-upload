@@ -33,8 +33,8 @@ class SimpleUrlControllerTest extends WebTestCase
         $responseData = json_decode($client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('shortCode', $responseData);
         $this->assertArrayHasKey('shortUrl', $responseData);
-        $this->assertArrayHasKey('original', $responseData);
-        $this->assertEquals('https://example.com', $responseData['original']);
+        $this->assertNotEmpty($responseData['shortCode']);
+        $this->assertStringContainsString('dlpz.fr/', $responseData['shortUrl']);
     }
 
     public function testShortenUrlWithInvalidData(): void

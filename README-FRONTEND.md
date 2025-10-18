@@ -1,207 +1,367 @@
-# Frontend dlpz.fr
+# DLPZ Shortener - Frontend React
 
-Frontend React pour le service de raccourcissement d'URL et d'upload de fichiers dlpz.fr.
+Interface utilisateur moderne pour le raccourcissement d'URLs, développée avec React et Tailwind CSS.
 
-## 🚀 Démarrage rapide
+## 🎨 Fonctionnalités Frontend
+
+- **Interface moderne** : Design épuré avec Tailwind CSS
+- **Thème sombre/clair** : Basculement automatique selon les préférences système
+- **Responsive** : Compatible mobile, tablette et desktop
+- **Composants réutilisables** : Architecture modulaire
+- **Gestion d'état** : Context API pour les thèmes et alertes
+- **Hooks personnalisés** : Logique métier encapsulée
+- **SEO optimisé** : Meta tags et structured data
+
+## 🛠️ Technologies
+
+- **React 18** - Bibliothèque UI
+- **Vite** - Build tool et serveur de développement
+- **Tailwind CSS** - Framework CSS utilitaire
+- **React Helmet** - Gestion du SEO
+- **Context API** - Gestion d'état global
+
+## 📁 Structure des Composants
+
+```
+src/
+├── components/           # Composants React
+│   ├── UrlForm.jsx      # Formulaire de raccourcissement
+│   ├── UrlList.jsx      # Liste des URLs
+│   ├── UrlItem.jsx      # Élément d'URL individuel
+│   ├── SEO.jsx          # Gestion du SEO
+│   ├── AlertContainer.jsx # Gestion des alertes
+│   └── theme-toggle.jsx # Basculeur de thème
+├── contexts/            # Contextes React
+│   ├── ThemeContext.jsx # Gestion du thème
+│   └── AlertContext.jsx # Gestion des alertes
+├── hooks/               # Hooks personnalisés
+│   └── useApi.js        # Hooks pour les appels API
+├── config/              # Configuration
+│   └── api.js           # Configuration API
+└── ui/                  # Composants UI de base
+    └── button.jsx       # Composant bouton
+```
+
+## 🚀 Installation et Développement
 
 ### Prérequis
 
 - Node.js 18+
 - npm ou yarn
-- Backend dlpz.fr en cours d'exécution sur le port 3002
 
 ### Installation
 
-1. **Installer les dépendances :**
-
 ```bash
+# Installer les dépendances
 npm install
-```
 
-2. **Configurer l'environnement :**
-
-```bash
-# Copier le fichier d'exemple
-cp env.example .env
-
-# Modifier .env si nécessaire
-# VITE_API_URL=http://localhost:3002
-```
-
-3. **Démarrer le serveur de développement :**
-
-```bash
+# Lancer le serveur de développement
 npm run dev
 ```
 
-Le frontend sera accessible sur `http://localhost:5173`
+### Scripts disponibles
 
-## 🔧 Configuration
+```bash
+# Développement
+npm run dev          # Serveur de développement Vite
+
+# Build
+npm run build        # Build de production
+npm run preview      # Prévisualiser le build
+
+# Linting
+npm run lint         # Vérifier le code
+npm run lint:fix     # Corriger automatiquement
+```
+
+## 🎨 Personnalisation
+
+### Thème et Couleurs
+
+Les couleurs sont définies dans `tailwind.config.js` :
+
+```javascript
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: '#eff6ff',
+          500: '#3b82f6',
+          600: '#2563eb',
+          // ...
+        }
+      }
+    }
+  }
+}
+```
+
+### Composants UI
+
+Les composants de base sont dans `src/ui/` et peuvent être personnalisés :
+
+```jsx
+// Exemple de personnalisation du bouton
+<Button 
+  variant="primary" 
+  size="lg" 
+  className="custom-class"
+>
+  Mon bouton
+</Button>
+```
+
+## 🔧 Configuration API
+
+La configuration API se trouve dans `src/config/api.js` :
+
+```javascript
+const API_CONFIG = {
+  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+  ENDPOINTS: {
+    URL_SHORTEN: '/api/shorten',
+    URL_INFO: '/api/urls',
+    // ...
+  }
+};
+```
 
 ### Variables d'environnement
 
-- `VITE_API_URL` : URL du backend (défaut: `http://localhost:3002`)
-- `VITE_NODE_ENV` : Environnement (development/production)
-- `VITE_BASE_URL` : URL de base de l'application
+Créer un fichier `.env.development` :
 
-### Proxy de développement
-
-En mode développement, Vite configure automatiquement un proxy pour rediriger les requêtes `/api/*` vers le backend sur le port 3002.
-
-## 📁 Structure du projet
-
-```
-src/
-├── components/          # Composants React
-│   ├── hero.jsx        # Composant principal
-│   ├── SEO.jsx         # Gestion SEO
-│   └── theme-toggle.jsx # Basculeur de thème
-├── config/             # Configuration
-│   └── api.js          # Configuration API
-├── contexts/           # Contextes React
-│   └── ThemeContext.jsx # Contexte de thème
-├── hooks/              # Hooks personnalisés
-│   └── useApi.js       # Hooks pour les appels API
-├── lib/                # Utilitaires
-│   └── utils.js        # Fonctions utilitaires
-└── App.jsx             # Composant principal
+```env
+VITE_API_URL=http://localhost:8000
 ```
 
-## 🔌 Intégration avec le backend
+## 📱 Responsive Design
 
-### Configuration API
+Le design est entièrement responsive avec des breakpoints Tailwind :
 
-Le frontend utilise le fichier `src/config/api.js` pour gérer les appels au backend :
+- **Mobile** : `< 640px`
+- **Tablette** : `640px - 1024px`
+- **Desktop** : `> 1024px`
 
-- **URL de base** : Configurée automatiquement selon l'environnement
-- **Endpoints** : Tous les endpoints du backend sont définis
-- **Gestion d'erreur** : Gestion centralisée des erreurs API
+### Exemples de classes responsive
 
-### Hooks personnalisés
+```jsx
+<div className="
+  flex flex-col          // Mobile : colonne
+  sm:flex-row           // Tablette+ : ligne
+  gap-4                 // Espacement
+  p-4                   // Padding mobile
+  sm:p-6                // Padding tablette+
+">
+```
 
-- `useUrlShortener()` : Gestion du raccourcissement d'URL
-- `useFileUpload()` : Gestion de l'upload de fichiers
-- `useApiHealth()` : Vérification de la santé de l'API
+## 🌙 Gestion des Thèmes
 
-### Exemple d'utilisation
+Le système de thème utilise le Context API :
 
-```javascript
-import { useUrlShortener } from "./hooks/useApi";
+```jsx
+import { useTheme } from './contexts/ThemeContext';
 
 function MyComponent() {
-  const { isLoading, error, result, shorten } = useUrlShortener();
-
-  const handleShorten = async () => {
-    await shorten("https://example.com");
-  };
-
+  const { theme, toggleTheme } = useTheme();
+  
   return (
-    <div>
-      <button onClick={handleShorten} disabled={isLoading}>
-        {isLoading ? "Raccourcissement..." : "Raccourcir"}
+    <div className={`
+      ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'}
+      ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
+    `}>
+      <button onClick={toggleTheme}>
+        {theme === 'dark' ? '☀️' : '🌙'}
       </button>
-      {error && <p>Erreur: {error}</p>}
-      {result && <p>URL raccourcie: {result}</p>}
     </div>
   );
 }
 ```
 
-## 🎨 Fonctionnalités
+## 🔔 Système d'Alertes
 
-### Raccourcissement d'URL
+Gestion des notifications avec le Context API :
 
-- ✅ Interface intuitive
-- ✅ Validation des URLs
-- ✅ Gestion d'erreur
-- ✅ Copie en un clic
+```jsx
+import { useAlert } from './contexts/AlertContext';
 
-### Upload de fichiers
+function MyComponent() {
+  const { showSuccess, showError } = useAlert();
+  
+  const handleSubmit = async () => {
+    try {
+      await apiCall();
+      showSuccess('Opération réussie !');
+    } catch (error) {
+      showError('Une erreur est survenue');
+    }
+  };
+}
+```
 
-- ✅ Drag & drop
-- ✅ Sélection de fichiers
-- ✅ Compression automatique (backend)
-- ✅ Prévisualisation des images
-- ✅ Téléchargement sécurisé
+## 🎯 Hooks Personnalisés
 
-### Interface utilisateur
+### useUrlShortener
 
-- ✅ Design moderne et responsive
-- ✅ Thème sombre/clair
-- ✅ Animations fluides
-- ✅ Optimisations de performance
+Hook pour le raccourcissement d'URLs :
 
-## 🔒 Sécurité
+```jsx
+import { useUrlShortener } from './hooks/useApi';
 
-Le frontend est conçu pour fonctionner avec le backend sécurisé :
+function UrlForm() {
+  const { shorten, isLoading, result } = useUrlShortener();
+  
+  const handleSubmit = async (url) => {
+    await shorten(url);
+  };
+}
+```
 
-- **Validation côté client** : Validation des entrées utilisateur
-- **Sanitisation** : Nettoyage des données avant envoi
-- **Gestion d'erreur** : Affichage sécurisé des messages d'erreur
-- **CORS** : Configuration appropriée pour la communication avec le backend
+### useUrlManager
+
+Hook pour la gestion des URLs :
+
+```jsx
+import { useUrlManager } from './hooks/useApi';
+
+function UrlList() {
+  const { urls, loadUrls, removeUrl } = useUrlManager();
+  
+  useEffect(() => {
+    loadUrls();
+  }, []);
+}
+```
+
+## 🔍 SEO et Meta Tags
+
+Le composant SEO gère automatiquement les meta tags :
+
+```jsx
+import SEO from './components/SEO';
+
+function App() {
+  return (
+    <>
+      <SEO 
+        title="Mon titre personnalisé"
+        description="Ma description"
+      />
+      {/* Contenu de l'app */}
+    </>
+  );
+}
+```
+
+## 📊 Performance
+
+### Optimisations implémentées
+
+- **Lazy loading** : Composants chargés à la demande
+- **Memoization** : useCallback et useMemo pour éviter les re-renders
+- **Code splitting** : Séparation du code par routes
+- **Tree shaking** : Élimination du code mort
+
+### Métriques
+
+```bash
+# Analyser le bundle
+npm run build
+npm run preview
+
+# Vérifier les performances
+npm run analyze
+```
+
+## 🧪 Tests
+
+### Tests unitaires (optionnel)
+
+```bash
+# Installer les dépendances de test
+npm install --save-dev @testing-library/react @testing-library/jest-dom
+
+# Lancer les tests
+npm test
+```
+
+### Tests E2E (optionnel)
+
+```bash
+# Installer Playwright
+npm install --save-dev @playwright/test
+
+# Lancer les tests E2E
+npx playwright test
+```
 
 ## 🚀 Déploiement
 
 ### Build de production
 
 ```bash
+# Build optimisé
 npm run build
+
+# Les fichiers sont générés dans dist/
 ```
 
 ### Variables d'environnement de production
 
-```bash
-# .env.production
-VITE_API_URL=https://api.dlpz.fr
-VITE_NODE_ENV=production
-VITE_BASE_URL=https://dlpz.fr
+Créer `.env.production` :
+
+```env
+VITE_API_URL=https://dlpz.fr
 ```
 
-### Serveur de production
+### Intégration avec le backend
 
-```bash
-npm run preview
+Le frontend est conçu pour être servi par le même serveur que le backend Symfony :
+
+```nginx
+# Configuration Nginx
+location / {
+    try_files $uri $uri/ /index.html;
+}
+
+location /api/ {
+    # Proxy vers Symfony
+    proxy_pass http://127.0.0.1:8000;
+}
 ```
 
-## 🐛 Dépannage
+## 🐛 Débogage
 
-### Problèmes courants
+### Outils de développement
 
-1. **Erreur de connexion au backend**
+- **React DevTools** : Extension navigateur
+- **Vite DevTools** : Outils intégrés Vite
+- **Tailwind CSS IntelliSense** : Extension VS Code
 
-   - Vérifier que le backend est démarré sur le port 3002
-   - Vérifier la configuration CORS du backend
+### Console et logs
 
-2. **Erreur de proxy en développement**
-
-   - Redémarrer le serveur de développement
-   - Vérifier la configuration du proxy dans `vite.config.js`
-
-3. **Erreurs de build**
-   - Nettoyer le cache : `npm run build -- --force`
-   - Vérifier les variables d'environnement
-
-### Logs de débogage
-
-```bash
-# Mode développement avec logs détaillés
-npm run dev -- --debug
-
-# Vérifier la santé de l'API
-curl http://localhost:3002/api/health
+```javascript
+// Logs conditionnels
+if (import.meta.env.DEV) {
+  console.log('Debug info:', data);
+}
 ```
 
-## 📝 Scripts disponibles
+## 📚 Ressources
 
-- `npm run dev` : Serveur de développement
-- `npm run build` : Build de production
-- `npm run preview` : Prévisualisation du build
-- `npm run lint` : Vérification du code
+- [Documentation React](https://react.dev/)
+- [Documentation Vite](https://vitejs.dev/)
+- [Documentation Tailwind CSS](https://tailwindcss.com/)
+- [React Helmet](https://github.com/nfl/react-helmet)
 
 ## 🤝 Contribution
 
 1. Fork le projet
 2. Créer une branche feature
-3. Commiter les changements
-4. Pousser vers la branche
+3. Commit les changements
+4. Push vers la branche
 5. Ouvrir une Pull Request
+
+---
+
+Pour plus d'informations sur le backend, consultez le [README principal](../README.md).

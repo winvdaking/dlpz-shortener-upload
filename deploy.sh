@@ -1,24 +1,16 @@
 #!/bin/bash
 
-# Script de déploiement pour dlpz.fr
-# Usage: ./deploy.sh [production|staging]
+# Script de déploiement pour DLPZ Shortener
+# Usage: ./deploy.sh [environment]
+# Environment: dev, staging, production (défaut: production)
 
 set -e  # Arrêter en cas d'erreur
 
 # Configuration
-DEPLOY_ENV=${1:-production}
-PROJECT_NAME="dlpz"
-DOMAIN="dlpz.fr"
-BACKEND_PORT=3002
-FRONTEND_PORT=5173
-
-# Chemins
-PROJECT_ROOT="/var/www/${PROJECT_NAME}"
-SOURCE_DIR="${PROJECT_ROOT}/app"
-FRONTEND_DIR="${PROJECT_ROOT}/frontend"
-BACKEND_DIR="${PROJECT_ROOT}/backend"
-NGINX_CONFIG="/etc/nginx/sites-available/${DOMAIN}"
-SYSTEMD_SERVICE="/etc/systemd/system/${PROJECT_NAME}-backend.service"
+ENVIRONMENT=${1:-production}
+PROJECT_DIR="/var/www/dlpz.fr"
+BACKUP_DIR="/var/backups/dlpz.fr"
+LOG_FILE="/var/log/dlpz-deploy.log"
 
 # Couleurs pour les logs
 RED='\033[0;31m'
@@ -29,390 +21,261 @@ NC='\033[0m' # No Color
 
 # Fonction de logging
 log() {
-    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1"
+    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1" | tee -a "$LOG_FILE"
 }
 
-log_success() {
-    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] ✅${NC} $1"
+error() {
+    echo -e "${RED}[ERROR]${NC} $1" | tee -a "$LOG_FILE"
+    exit 1
 }
 
-log_warning() {
-    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] ⚠️${NC} $1"
+success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1" | tee -a "$LOG_FILE"
 }
 
-log_error() {
-    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ❌${NC} $1"
+warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1" | tee -a "$LOG_FILE"
 }
 
-# Vérifier si on est root
-check_root() {
-    if [[ $EUID -ne 0 ]]; then
-        log_error "Ce script doit être exécuté en tant que root"
-        exit 1
-    fi
-}
-
-# Vérifier les prérequis
+# Vérification des prérequis
 check_prerequisites() {
     log "Vérification des prérequis..."
     
-    # Vérifier Node.js
-    if ! command -v node &> /dev/null; then
-        log_error "Node.js n'est pas installé"
-        exit 1
+    # Vérifier si on est root ou sudo
+    if [[ $EUID -ne 0 ]]; then
+        error "Ce script doit être exécuté en tant que root ou avec sudo"
     fi
     
-    # Vérifier npm
-    if ! command -v npm &> /dev/null; then
-        log_error "npm n'est pas installé"
-        exit 1
-    fi
+    # Vérifier les commandes nécessaires
+    for cmd in git composer npm php nginx systemctl; do
+        if ! command -v $cmd &> /dev/null; then
+            error "Commande manquante: $cmd"
+        fi
+    done
     
-    # Vérifier nginx
-    if ! command -v nginx &> /dev/null; then
-        log_error "nginx n'est pas installé"
-        exit 1
-    fi
-    
-    # Vérifier systemctl
-    if ! command -v systemctl &> /dev/null; then
-        log_error "systemctl n'est pas disponible"
-        exit 1
-    fi
-    
-    log_success "Tous les prérequis sont installés"
+    success "Prérequis vérifiés"
 }
 
-# Créer la structure de répertoires
+# Création des répertoires nécessaires
 create_directories() {
-    log "Création de la structure de répertoires..."
+    log "Création des répertoires..."
     
-    mkdir -p "${PROJECT_ROOT}"
-    mkdir -p "${FRONTEND_DIR}"
-    mkdir -p "${BACKEND_DIR}"
-    mkdir -p "${PROJECT_ROOT}/logs"
-    mkdir -p "${PROJECT_ROOT}/uploads"
-    mkdir -p "${PROJECT_ROOT}/data"
+    mkdir -p "$PROJECT_DIR"
+    mkdir -p "$BACKUP_DIR"
+    mkdir -p "/var/log"
     
-    # Vérifier que le répertoire source existe
-    if [ ! -d "${SOURCE_DIR}" ]; then
-        log_error "Le répertoire source ${SOURCE_DIR} n'existe pas. Veuillez cloner le repository d'abord."
-        exit 1
-    fi
-    
-    # Permissions
-    chown -R www-data:www-data "${PROJECT_ROOT}"
-    chmod -R 755 "${PROJECT_ROOT}"
-    
-    log_success "Structure de répertoires créée"
+    success "Répertoires créés"
 }
 
-# Déployer le frontend
-deploy_frontend() {
-    log "Déploiement du frontend..."
-    
-    # Aller dans le répertoire source du frontend
-    cd "${SOURCE_DIR}"
-    
-    # Installer les dépendances
-    log "Installation des dépendances frontend..."
-    if [ -f "package-lock.json" ]; then
-        npm ci --production=false
+# Sauvegarde de la version actuelle
+backup_current() {
+    if [ -d "$PROJECT_DIR" ] && [ "$(ls -A $PROJECT_DIR)" ]; then
+        log "Sauvegarde de la version actuelle..."
+        
+        BACKUP_NAME="backup-$(date +%Y%m%d-%H%M%S)"
+        BACKUP_PATH="$BACKUP_DIR/$BACKUP_NAME"
+        
+        cp -r "$PROJECT_DIR" "$BACKUP_PATH"
+        
+        # Garder seulement les 5 dernières sauvegardes
+        cd "$BACKUP_DIR"
+        ls -t | tail -n +6 | xargs -r rm -rf
+        
+        success "Sauvegarde créée: $BACKUP_NAME"
     else
-        npm install --production=false
+        warning "Aucune version actuelle à sauvegarder"
     fi
-    
-    # Build de production
-    log "Build de production du frontend..."
-    npm run build
-    
-    # Vérifier que le build a réussi
-    if [ ! -d "dist" ]; then
-        log_error "Le build du frontend a échoué"
-        exit 1
-    fi
-    
-    # Copier les fichiers vers le répertoire de déploiement
-    mkdir -p "${FRONTEND_DIR}/app/dist"
-    cp -r dist/* "${FRONTEND_DIR}/app/dist/"
-    
-    # Permissions
-    chown -R www-data:www-data "${FRONTEND_DIR}"
-    chmod -R 755 "${FRONTEND_DIR}"
-    
-    log_success "Frontend déployé avec succès"
 }
 
-# Déployer le backend
-deploy_backend() {
-    log "Déploiement du backend..."
+# Clonage/mise à jour du code
+update_code() {
+    log "Mise à jour du code source..."
     
-    # Copier les fichiers backend depuis le répertoire source
-    log "Copie des fichiers backend..."
-    cp -r "${SOURCE_DIR}/backend"/* "${BACKEND_DIR}/"
-    
-    # Aller dans le répertoire backend
-    cd "${BACKEND_DIR}"
-    
-    # Installer les dépendances
+    if [ -d "$PROJECT_DIR/.git" ]; then
+        # Mise à jour d'un dépôt existant
+        cd "$PROJECT_DIR"
+        git fetch origin
+        git reset --hard origin/main
+        success "Code mis à jour via Git"
+    else
+        # Clonage initial
+        git clone https://github.com/votre-username/dlpz-shortener.git "$PROJECT_DIR"
+        success "Code cloné depuis Git"
+    fi
+}
+
+# Installation des dépendances backend
+install_backend_deps() {
     log "Installation des dépendances backend..."
-    if [ -f "package-lock.json" ]; then
-        npm ci --production=true
+    
+    cd "$PROJECT_DIR/backend"
+    
+    # Installation des dépendances Composer
+    if [ "$ENVIRONMENT" = "production" ]; then
+        composer install --no-dev --optimize-autoloader --no-interaction
     else
-        npm install --production=true
+        composer install --no-interaction
     fi
     
-    # Créer les répertoires nécessaires
-    mkdir -p uploads
-    mkdir -p data
-    mkdir -p logs
+    success "Dépendances backend installées"
+}
+
+# Installation des dépendances frontend
+install_frontend_deps() {
+    log "Installation des dépendances frontend..."
+    
+    cd "$PROJECT_DIR"
+    
+    # Installation des dépendances npm
+    npm ci
+    
+    success "Dépendances frontend installées"
+}
+
+# Configuration des fichiers d'environnement
+setup_environment() {
+    log "Configuration de l'environnement..."
+    
+    # Backend
+    if [ ! -f "$PROJECT_DIR/backend/.env" ]; then
+        cp "$PROJECT_DIR/backend/env.example" "$PROJECT_DIR/backend/.env"
+        warning "Fichier .env backend créé - Veuillez le configurer"
+    fi
+    
+    # Frontend
+    if [ ! -f "$PROJECT_DIR/.env.production" ]; then
+        cp "$PROJECT_DIR/env.example" "$PROJECT_DIR/.env.production"
+        warning "Fichier .env.production frontend créé - Veuillez le configurer"
+    fi
+    
+    success "Configuration d'environnement terminée"
+}
+
+# Build du frontend
+build_frontend() {
+    log "Build du frontend..."
+    
+    cd "$PROJECT_DIR"
+    
+    if [ "$ENVIRONMENT" = "production" ]; then
+        npm run build
+    else
+        npm run build
+    fi
+    
+    success "Frontend buildé"
+}
+
+# Configuration des permissions
+setup_permissions() {
+    log "Configuration des permissions..."
+    
+    # Propriétaire
+    chown -R www-data:www-data "$PROJECT_DIR"
     
     # Permissions
-    chown -R www-data:www-data "${BACKEND_DIR}"
-    chmod -R 755 "${BACKEND_DIR}"
+    find "$PROJECT_DIR" -type d -exec chmod 755 {} \;
+    find "$PROJECT_DIR" -type f -exec chmod 644 {} \;
     
-    log_success "Backend déployé avec succès"
+    # Permissions spéciales
+    chmod 755 "$PROJECT_DIR/backend/bin/console"
+    chmod -R 777 "$PROJECT_DIR/backend/var"
+    chmod -R 777 "$PROJECT_DIR/backend/data"
+    
+    success "Permissions configurées"
 }
 
-# Créer le service systemd
-create_systemd_service() {
-    log "Création du service systemd..."
+# Configuration Nginx
+setup_nginx() {
+    log "Configuration Nginx..."
     
-    cat > "${SYSTEMD_SERVICE}" << EOF
-[Unit]
-Description=dlpz.fr Backend Service
-After=network.target
-
-[Service]
-Type=simple
-User=www-data
-Group=www-data
-WorkingDirectory=${BACKEND_DIR}
-ExecStart=/usr/bin/node server.js
-Restart=always
-RestartSec=10
-Environment=NODE_ENV=production
-Environment=PORT=${BACKEND_PORT}
-Environment=FRONTEND_URL=https://${DOMAIN}
-Environment=UPLOAD_DIR=${BACKEND_DIR}/uploads
-Environment=DATA_DIR=${BACKEND_DIR}/data
-
-# Logs
-StandardOutput=append:${PROJECT_ROOT}/logs/backend.log
-StandardError=append:${PROJECT_ROOT}/logs/backend-error.log
-
-# Sécurité
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=${BACKEND_DIR}
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-    # Recharger systemd et activer le service
-    systemctl daemon-reload
-    systemctl enable "${PROJECT_NAME}-backend"
+    # Copier la configuration
+    cp "$PROJECT_DIR/nginx/dlpz.fr.conf" "/etc/nginx/sites-available/dlpz.fr"
     
-    log_success "Service systemd créé et activé"
-}
-
-# Configurer nginx
-configure_nginx() {
-    log "Configuration de nginx..."
-    
-    # Créer la configuration nginx
-    cat > "${NGINX_CONFIG}" << EOF
-# dlpz.fr
-server {
-    listen 80;
-    server_name ${DOMAIN} www.${DOMAIN};
-    return 301 https://\$server_name\$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name ${DOMAIN} www.${DOMAIN};
-
-    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
-    ssl_prefer_server_ciphers off;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 10m;
-
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header Referrer-Policy "no-referrer-when-downgrade" always;
-    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-
-    limit_req zone=general burst=10 nodelay;
-    client_max_body_size 15M;
-
-    # Frontend
-    location / {
-        root ${PROJECT_ROOT}/frontend/app/dist;
-        index index.html index.htm;
-        try_files \$uri \$uri/ /index.html;
-        
-        add_header Cache-Control "no-cache, no-store, must-revalidate";
-        add_header Pragma "no-cache";
-        add_header Expires "0";
-    }
-
-    # API Backend
-    location /api/ {
-        proxy_pass http://127.0.0.1:${BACKEND_PORT};
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_cache_bypass \$http_upgrade;
-        proxy_read_timeout 300s;
-        proxy_connect_timeout 75s;
-    }
-
-    # Fichiers uploadés
-    location /uploads/ {
-        alias ${BACKEND_DIR}/uploads/;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-        add_header X-Cache-Status "UPLOAD";
-        
-        # Sécurité pour les uploads
-        location ~* \.(php|phtml|php3|php4|php5|pl|py|jsp|asp|sh|cgi)$ {
-            deny all;
-        }
-    }
-
-    # Types MIME pour les fichiers modernes
-    location ~* \.jsx$ {
-        root ${PROJECT_ROOT}/frontend/app/dist;
-        add_header Content-Type "application/javascript";
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-    
-    location ~* \.tsx$ {
-        root ${PROJECT_ROOT}/frontend/app/dist;
-        add_header Content-Type "application/javascript";
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-    
-    location ~* \.ts$ {
-        root ${PROJECT_ROOT}/frontend/app/dist;
-        add_header Content-Type "application/javascript";
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        root ${PROJECT_ROOT}/frontend/app/dist;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-        add_header X-Cache-Status "STATIC";
-    }
-
-    error_page 404 /index.html;
-    error_page 500 502 503 504 /50x.html;
-    
-    location = /50x.html {
-        root /usr/share/nginx/html;
-    }
-}
-EOF
-
     # Activer le site
-    ln -sf "${NGINX_CONFIG}" "/etc/nginx/sites-enabled/${DOMAIN}"
+    ln -sf "/etc/nginx/sites-available/dlpz.fr" "/etc/nginx/sites-enabled/"
     
-    # Tester la configuration nginx
+    # Tester la configuration
     nginx -t
     
-    log_success "Configuration nginx créée et testée"
-}
-
-# Démarrer les services
-start_services() {
-    log "Démarrage des services..."
-    
-    # Démarrer le backend
-    systemctl start "${PROJECT_NAME}-backend"
-    systemctl status "${PROJECT_NAME}-backend" --no-pager
-    
-    # Recharger nginx
+    # Recharger Nginx
     systemctl reload nginx
     
-    log_success "Services démarrés avec succès"
+    success "Nginx configuré et rechargé"
 }
 
-# Vérifier le déploiement
-verify_deployment() {
-    log "Vérification du déploiement..."
+# Configuration PHP-FPM
+setup_php_fpm() {
+    log "Configuration PHP-FPM..."
     
-    # Vérifier le backend
-    if systemctl is-active --quiet "${PROJECT_NAME}-backend"; then
-        log_success "Backend est actif"
+    # Redémarrer PHP-FPM
+    systemctl restart php8.1-fpm
+    
+    success "PHP-FPM redémarré"
+}
+
+# Tests de déploiement
+run_tests() {
+    log "Exécution des tests..."
+    
+    cd "$PROJECT_DIR/backend"
+    
+    # Tests unitaires
+    if [ "$ENVIRONMENT" != "production" ]; then
+        php bin/phpunit --testdox
+        success "Tests unitaires passés"
     else
-        log_error "Backend n'est pas actif"
-        return 1
+        warning "Tests unitaires ignorés en production"
     fi
     
-    # Vérifier nginx
-    if systemctl is-active --quiet nginx; then
-        log_success "Nginx est actif"
-    else
-        log_error "Nginx n'est pas actif"
-        return 1
-    fi
+    # Test de santé de l'API
+    sleep 5  # Attendre que les services redémarrent
     
-    # Test de l'API
-    sleep 5
-    if curl -f -s "http://localhost:${BACKEND_PORT}/api/health" > /dev/null; then
-        log_success "API backend répond correctement"
+    if curl -f -s "http://localhost/api/health" > /dev/null; then
+        success "Test de santé API réussi"
     else
-        log_warning "API backend ne répond pas (peut être normal si pas encore démarré)"
+        error "Test de santé API échoué"
     fi
+}
+
+# Nettoyage
+cleanup() {
+    log "Nettoyage..."
     
-    log_success "Vérification du déploiement terminée"
+    # Nettoyer les caches
+    cd "$PROJECT_DIR/backend"
+    php bin/console cache:clear --env=prod
+    
+    # Nettoyer les logs anciens
+    find /var/log -name "*.log" -mtime +30 -delete 2>/dev/null || true
+    
+    success "Nettoyage terminé"
 }
 
 # Fonction principale
 main() {
-    log "🚀 Début du déploiement de ${PROJECT_NAME} en mode ${DEPLOY_ENV}"
+    log "Début du déploiement DLPZ Shortener (environnement: $ENVIRONMENT)"
     
-    check_root
     check_prerequisites
     create_directories
-    deploy_frontend
-    deploy_backend
-    create_systemd_service
-    configure_nginx
-    start_services
-    verify_deployment
+    backup_current
+    update_code
+    install_backend_deps
+    install_frontend_deps
+    setup_environment
+    build_frontend
+    setup_permissions
+    setup_nginx
+    setup_php_fpm
+    run_tests
+    cleanup
     
-    log_success "🎉 Déploiement terminé avec succès !"
-    log "📱 Frontend: https://${DOMAIN}"
-    log "🔧 Backend: https://${DOMAIN}/api"
-    log "🔍 Health Check: https://${DOMAIN}/api/health"
-    log ""
-    log "📋 Commandes utiles:"
-    log "  - Voir les logs backend: journalctl -u ${PROJECT_NAME}-backend -f"
-    log "  - Redémarrer backend: systemctl restart ${PROJECT_NAME}-backend"
-    log "  - Voir les logs nginx: tail -f /var/log/nginx/error.log"
-    log "  - Tester nginx: nginx -t"
+    success "Déploiement terminé avec succès !"
+    log "Application disponible sur: https://dlpz.fr"
 }
 
 # Gestion des erreurs
-trap 'log_error "Erreur lors du déploiement. Vérifiez les logs."; exit 1' ERR
+trap 'error "Déploiement interrompu par une erreur"' ERR
 
-# Exécuter le script principal
+# Exécution
 main "$@"

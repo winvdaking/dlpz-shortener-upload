@@ -41,7 +41,7 @@ class UrlShortenerService
                 'shortCode' => $existingUrl->getShortCode(),
                 'shortUrl' => $this->baseUrl . '/' . $existingUrl->getShortCode(),
                 'original' => $existingUrl->getOriginal(),
-                'createdAt' => $existingUrl->getCreatedAt()->format('Y-m-d H:i:s'),
+                'createdAt' => $existingUrl->getCreatedAt()->format('Y-m-d\TH:i:s\Z'),
                 'clicks' => $existingUrl->getClicks(),
             ];
         }
@@ -57,7 +57,7 @@ class UrlShortenerService
             'shortCode' => $shortCode,
             'shortUrl' => $this->baseUrl . '/' . $shortCode,
             'original' => $normalizedUrl,
-            'createdAt' => $url->getCreatedAt()->format('Y-m-d H:i:s'),
+            'createdAt' => $url->getCreatedAt()->format('Y-m-d\TH:i:s\Z'),
             'clicks' => 0,
         ];
     }

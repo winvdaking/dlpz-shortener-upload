@@ -44,7 +44,8 @@ class UrlRepository
         $data = $this->loadData();
 
         foreach ($data as $urlData) {
-            if ($urlData['short'] === $shortCode) {
+            $code = $urlData['code'] ?? $urlData['short'] ?? null;
+            if ($code === $shortCode) {
                 return Url::fromArray($urlData);
             }
         }
@@ -73,7 +74,8 @@ class UrlRepository
         // Vérifier si l'URL existe déjà
         $existingIndex = null;
         foreach ($data as $index => $existingUrl) {
-            if ($existingUrl['short'] === $url->getShortCode()) {
+            $code = $existingUrl['code'] ?? $existingUrl['short'] ?? null;
+            if ($code === $url->getShortCode()) {
                 $existingIndex = $index;
                 break;
             }
@@ -96,7 +98,8 @@ class UrlRepository
         $found = false;
 
         foreach ($data as $index => $urlData) {
-            if ($urlData['short'] === $shortCode) {
+            $code = $urlData['code'] ?? $urlData['short'] ?? null;
+            if ($code === $shortCode) {
                 unset($data[$index]);
                 $found = true;
                 break;
@@ -116,7 +119,8 @@ class UrlRepository
         $found = false;
 
         foreach ($data as $index => $urlData) {
-            if ($urlData['short'] === $shortCode) {
+            $code = $urlData['code'] ?? $urlData['short'] ?? null;
+            if ($code === $shortCode) {
                 $data[$index]['clicks'] = ($data[$index]['clicks'] ?? 0) + 1;
                 $found = true;
                 break;

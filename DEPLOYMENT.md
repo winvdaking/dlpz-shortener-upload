@@ -1,451 +1,446 @@
-# Guide de déploiement pour dlpz.fr
+# Guide de Déploiement - DLPZ Shortener
 
-Ce guide explique comment déployer l'application dlpz.fr (raccourcisseur d'URL et upload de fichiers) sur un serveur de production.
+Guide complet pour déployer DLPZ Shortener sur un VPS OVH avec Nginx et PHP-FPM.
 
-## 📋 Prérequis
+## 🚀 Déploiement Automatique
 
-### Serveur
+### Prérequis
 
-- **OS** : Ubuntu 20.04+ ou Debian 11+
-- **RAM** : Minimum 2GB (recommandé 4GB+)
-- **Stockage** : Minimum 20GB (recommandé 50GB+)
-- **CPU** : 2 cœurs minimum
+- VPS OVH avec Ubuntu 20.04+ ou Debian 11+
+- Accès root ou sudo
+- Domaine configuré (ex: dlpz.fr)
+- DNS pointant vers votre serveur
 
-### Logiciels requis
-
-- **Node.js** 18+ avec npm
-- **Nginx** 1.18+
-- **Certificats SSL** (Let's Encrypt)
-- **Git** pour le déploiement
-- **Systemd** pour la gestion des services
-
-## 🚀 Installation initiale
-
-### 1. Préparation du serveur
-
-```bash
-# Mise à jour du système
-sudo apt update && sudo apt upgrade -y
-
-# Installation des dépendances
-sudo apt install -y curl wget git nginx certbot python3-certbot-nginx
-
-# Installation de Node.js 18+
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install -y nodejs
-
-# Vérification des versions
-node --version  # Doit être 18+
-npm --version
-nginx -v
-```
-
-### 2. Configuration du domaine
-
-```bash
-# Vérifier que le domaine pointe vers le serveur
-nslookup dlpz.fr
-ping dlpz.fr
-
-# Obtenir les certificats SSL
-sudo certbot --nginx -d dlpz.fr -d www.dlpz.fr
-```
-
-### 3. Configuration de base
-
-```bash
-# Créer l'utilisateur pour l'application
-sudo useradd -r -s /bin/false dlpz
-
-# Créer la structure de répertoires
-sudo mkdir -p /var/www/dlpz/{frontend,backend,logs,backups,uploads,data}
-sudo chown -R dlpz:dlpz /var/www/dlpz
-sudo chmod -R 755 /var/www/dlpz
-```
-
-## 📦 Déploiement
-
-### Option 1 : Déploiement automatique (Recommandé)
+### Déploiement en une commande
 
 ```bash
 # Cloner le projet
-git clone https://github.com/votre-repo/dlpz.git /tmp/dlpz
-cd /tmp/dlpz
+git clone https://github.com/votre-username/dlpz-shortener.git
+cd dlpz-shortener
 
 # Rendre le script exécutable
 chmod +x deploy.sh
 
-# Exécuter le déploiement
+# Déployer en production
 sudo ./deploy.sh production
 ```
 
-### Option 2 : Déploiement manuel
+## 🛠️ Déploiement Manuel
 
-#### 1. Déployer le frontend
+### 1. Préparation du Serveur
 
 ```bash
-# Aller dans le répertoire frontend
-cd /var/www/dlpz/frontend
+# Mettre à jour le système
+sudo apt update && sudo apt upgrade -y
 
-# Copier les fichiers du projet
-cp -r /tmp/dlpz/* .
+# Installer les dépendances système
+sudo apt install -y software-properties-common curl wget git unzip
 
-# Installer les dépendances
-npm ci
+# Installer PHP 8.1+
+sudo add-apt-repository ppa:ondrej/php -y
+sudo apt update
+sudo apt install -y php8.1-fpm php8.1-cli php8.1-common php8.1-mbstring \
+    php8.1-xml php8.1-curl php8.1-zip php8.1-intl php8.1-bcmath
 
-# Build de production
+# Installer Composer
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+sudo chmod +x /usr/local/bin/composer
+
+# Installer Node.js 18+
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Installer Nginx
+sudo apt install -y nginx
+
+# Installer Certbot pour SSL
+sudo apt install -y certbot python3-certbot-nginx
+```
+
+### 2. Configuration du Projet
+
+```bash
+# Créer le répertoire du projet
+sudo mkdir -p /var/www/dlpz.fr
+sudo chown -R $USER:www-data /var/www/dlpz.fr
+
+# Cloner le projet
+cd /var/www/dlpz.fr
+git clone https://github.com/votre-username/dlpz-shortener.git .
+
+# Configuration backend
+cd backend
+composer install --no-dev --optimize-autoloader
+cp env.example .env
+
+# Configuration frontend
+cd ..
+npm install
 npm run build
-
-# Copier les fichiers buildés
-sudo cp -r dist/* /var/www/dlpz/frontend/app/dist/
-sudo chown -R www-data:www-data /var/www/dlpz/frontend
 ```
 
-#### 2. Déployer le backend
+### 3. Configuration des Variables d'Environnement
 
-```bash
-# Aller dans le répertoire backend
-cd /var/www/dlpz/backend
+#### Backend (.env)
 
-# Copier les fichiers du projet
-cp -r /tmp/dlpz/backend/* .
-
-# Installer les dépendances
-npm ci --production
-
-# Créer les répertoires nécessaires
-mkdir -p uploads data logs
-
-# Permissions
-sudo chown -R www-data:www-data /var/www/dlpz/backend
-sudo chmod -R 755 /var/www/dlpz/backend
+```env
+APP_ENV=prod
+APP_SECRET=your-super-secret-key-here-change-this
+BASE_URL=https://dlpz.fr
+SHORT_CODE_LENGTH=6
+SERVER_PORT=3002
 ```
 
-#### 3. Configuration nginx
+#### Frontend (.env.production)
+
+```env
+VITE_API_URL=https://dlpz.fr
+```
+
+### 4. Configuration Nginx
 
 ```bash
-# Copier la configuration nginx
-sudo cp /tmp/dlpz/nginx/dlpz.fr.conf /etc/nginx/sites-available/dlpz.fr
+# Copier la configuration
+sudo cp nginx/dlpz.fr.conf /etc/nginx/sites-available/dlpz.fr
 
 # Activer le site
-sudo ln -sf /etc/nginx/sites-available/dlpz.fr /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/dlpz.fr /etc/nginx/sites-enabled/
+
+# Désactiver le site par défaut
+sudo rm -f /etc/nginx/sites-enabled/default
 
 # Tester la configuration
 sudo nginx -t
 
-# Recharger nginx
+# Recharger Nginx
 sudo systemctl reload nginx
 ```
 
-#### 4. Service systemd
+### 5. Configuration SSL avec Let's Encrypt
 
 ```bash
-# Le service systemd est créé automatiquement par le script deploy.sh
-# Vérifier qu'il est actif
-sudo systemctl status dlpz-backend
-sudo systemctl enable dlpz-backend
-sudo systemctl start dlpz-backend
+# Obtenir le certificat SSL
+sudo certbot --nginx -d dlpz.fr -d www.dlpz.fr
+
+# Vérifier le renouvellement automatique
+sudo certbot renew --dry-run
 ```
 
-## 🔧 Configuration
-
-### Variables d'environnement
-
-#### Backend (`/var/www/dlpz/backend/env.production`)
+### 6. Configuration des Permissions
 
 ```bash
-NODE_ENV=production
-PORT=3002
-FRONTEND_URL=https://dlpz.fr
-API_URL=https://dlpz.fr/api
-UPLOAD_DIR=/var/www/dlpz/backend/uploads
-DATA_DIR=/var/www/dlpz/backend/data
-LOG_DIR=/var/www/dlpz/logs
-CORS_ORIGIN=https://dlpz.fr
-TRUST_PROXY=true
+# Propriétaire
+sudo chown -R www-data:www-data /var/www/dlpz.fr
+
+# Permissions
+sudo find /var/www/dlpz.fr -type d -exec chmod 755 {} \;
+sudo find /var/www/dlpz.fr -type f -exec chmod 644 {} \;
+
+# Permissions spéciales
+sudo chmod 755 /var/www/dlpz.fr/backend/bin/console
+sudo chmod -R 777 /var/www/dlpz.fr/backend/var
+sudo chmod -R 777 /var/www/dlpz.fr/backend/data
 ```
 
-#### Frontend (`/var/www/dlpz/frontend/env.production`)
+### 7. Démarrage des Services
 
 ```bash
-VITE_API_URL=https://dlpz.fr
-VITE_NODE_ENV=production
-VITE_BASE_URL=https://dlpz.fr
+# Redémarrer PHP-FPM
+sudo systemctl restart php8.1-fpm
+
+# Redémarrer Nginx
+sudo systemctl restart nginx
+
+# Activer les services au démarrage
+sudo systemctl enable php8.1-fpm
+sudo systemctl enable nginx
 ```
 
-### Configuration nginx
+## 🔧 Configuration Avancée
 
-La configuration nginx est optimisée pour :
+### Optimisation PHP-FPM
 
-- **SSL/TLS** : Configuration moderne et sécurisée
-- **Compression** : Gzip activé pour tous les assets
-- **Cache** : Cache intelligent pour les fichiers statiques
-- **Sécurité** : Headers de sécurité et protection contre les attaques
-- **Rate limiting** : Limitation de débit pour l'API et les uploads
+Éditer `/etc/php/8.1/fpm/pool.d/www.conf` :
 
-## 🛠️ Gestion des services
+```ini
+; Pool de processus
+pm = dynamic
+pm.max_children = 50
+pm.start_servers = 5
+pm.min_spare_servers = 5
+pm.max_spare_servers = 35
+pm.max_requests = 1000
 
-### Script de gestion
-
-```bash
-# Rendre le script exécutable
-chmod +x scripts/manage-service.sh
-
-# Commandes disponibles
-sudo ./scripts/manage-service.sh start      # Démarrer le service
-sudo ./scripts/manage-service.sh stop       # Arrêter le service
-sudo ./scripts/manage-service.sh restart    # Redémarrer le service
-sudo ./scripts/manage-service.sh status     # Statut du service
-sudo ./scripts/manage-service.sh logs       # Voir les logs
-sudo ./scripts/manage-service.sh logs -f    # Suivre les logs en temps réel
-sudo ./scripts/manage-service.sh health     # Vérifier la santé de l'API
-sudo ./scripts/manage-service.sh backup     # Créer une sauvegarde
-sudo ./scripts/manage-service.sh update     # Mettre à jour le service
+; Limites
+request_terminate_timeout = 30s
+max_execution_time = 30
+memory_limit = 256M
+upload_max_filesize = 10M
+post_max_size = 10M
 ```
 
-### Commandes systemd directes
+### Optimisation Nginx
 
-```bash
-# Gestion du service
-sudo systemctl start dlpz-backend
-sudo systemctl stop dlpz-backend
-sudo systemctl restart dlpz-backend
-sudo systemctl status dlpz-backend
+Ajouter dans `/etc/nginx/nginx.conf` :
 
-# Logs
-sudo journalctl -u dlpz-backend -f
-sudo journalctl -u dlpz-backend --since "1 hour ago"
+```nginx
+# Optimisations globales
+worker_processes auto;
+worker_connections 1024;
 
-# Activation/désactivation au démarrage
-sudo systemctl enable dlpz-backend
-sudo systemctl disable dlpz-backend
+# Cache
+open_file_cache max=1000 inactive=20s;
+open_file_cache_valid 30s;
+open_file_cache_min_uses 2;
+open_file_cache_errors on;
+
+# Gzip
+gzip on;
+gzip_vary on;
+gzip_min_length 1024;
+gzip_comp_level 6;
+gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
 ```
 
-## 💾 Sauvegardes
+### Monitoring et Logs
 
-### Sauvegarde automatique
+#### Configuration des logs
 
 ```bash
-# Rendre le script exécutable
-chmod +x scripts/backup.sh
+# Créer les répertoires de logs
+sudo mkdir -p /var/log/dlpz.fr
+sudo chown www-data:www-data /var/log/dlpz.fr
 
-# Types de sauvegarde
-sudo ./scripts/backup.sh daily      # Sauvegarde des données (quotidienne)
-sudo ./scripts/backup.sh weekly     # Sauvegarde complète (hebdomadaire)
-sudo ./scripts/backup.sh monthly    # Sauvegarde complète + config (mensuelle)
-
-# Gestion des sauvegardes
-sudo ./scripts/backup.sh stats      # Statistiques des sauvegardes
-sudo ./scripts/backup.sh verify     # Vérifier l'intégrité
-sudo ./scripts/backup.sh cleanup    # Nettoyer les anciennes sauvegardes
+# Rotation des logs
+sudo tee /etc/logrotate.d/dlpz.fr << EOF
+/var/log/dlpz.fr/*.log {
+    daily
+    missingok
+    rotate 30
+    compress
+    delaycompress
+    notifempty
+    create 644 www-data www-data
+    postrotate
+        systemctl reload nginx
+    endscript
+}
+EOF
 ```
 
-### Cron pour les sauvegardes automatiques
+#### Monitoring avec htop
 
 ```bash
-# Éditer le crontab
-sudo crontab -e
+# Installer htop
+sudo apt install htop
 
-# Ajouter ces lignes :
-# Sauvegarde quotidienne à 2h du matin
-0 2 * * * /var/www/dlpz/scripts/backup.sh daily >> /var/www/dlpz/logs/backup.log 2>&1
-
-# Sauvegarde hebdomadaire le dimanche à 3h
-0 3 * * 0 /var/www/dlpz/scripts/backup.sh weekly >> /var/www/dlpz/logs/backup.log 2>&1
-
-# Sauvegarde mensuelle le 1er à 4h
-0 4 1 * * /var/www/dlpz/scripts/backup.sh monthly >> /var/www/dlpz/logs/backup.log 2>&1
+# Surveiller les ressources
+htop
 ```
 
-## 🔍 Monitoring et logs
+## 🧪 Tests de Déploiement
 
-### Logs de l'application
-
-```bash
-# Logs du backend
-sudo journalctl -u dlpz-backend -f
-
-# Logs nginx
-sudo tail -f /var/log/nginx/dlpz.fr.access.log
-sudo tail -f /var/log/nginx/dlpz.fr.error.log
-
-# Logs de sauvegarde
-sudo tail -f /var/www/dlpz/logs/backup.log
-```
-
-### Vérification de la santé
+### Tests Automatiques
 
 ```bash
-# Test de l'API
+# Tests unitaires
+cd /var/www/dlpz.fr/backend
+php bin/phpunit
+
+# Test de santé de l'API
 curl -f https://dlpz.fr/api/health
 
-# Test du frontend
-curl -f https://dlpz.fr/
-
-# Vérification SSL
-openssl s_client -connect dlpz.fr:443 -servername dlpz.fr
+# Test de raccourcissement
+curl -X POST https://dlpz.fr/api/shorten \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com"}'
 ```
 
-### Monitoring des ressources
+### Tests de Performance
 
 ```bash
-# Utilisation CPU et mémoire
-htop
+# Test de charge avec Apache Bench
+sudo apt install apache2-utils
 
-# Espace disque
+# Test de 100 requêtes avec 10 connexions simultanées
+ab -n 100 -c 10 https://dlpz.fr/api/health
+```
+
+## 🔄 Mise à Jour
+
+### Mise à jour automatique
+
+```bash
+# Utiliser le script de déploiement
+sudo ./deploy.sh production
+```
+
+### Mise à jour manuelle
+
+```bash
+# Sauvegarder
+sudo cp -r /var/www/dlpz.fr /var/backups/dlpz.fr-$(date +%Y%m%d)
+
+# Mettre à jour le code
+cd /var/www/dlpz.fr
+git pull origin main
+
+# Mettre à jour les dépendances
+cd backend
+composer install --no-dev --optimize-autoloader
+
+cd ..
+npm ci
+npm run build
+
+# Redémarrer les services
+sudo systemctl restart php8.1-fpm
+sudo systemctl reload nginx
+```
+
+## 🛡️ Sécurité
+
+### Firewall
+
+```bash
+# Installer UFW
+sudo apt install ufw
+
+# Configuration de base
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow ssh
+sudo ufw allow 'Nginx Full'
+
+# Activer le firewall
+sudo ufw enable
+```
+
+### Fail2Ban
+
+```bash
+# Installer Fail2Ban
+sudo apt install fail2ban
+
+# Configuration pour Nginx
+sudo tee /etc/fail2ban/jail.local << EOF
+[nginx-http-auth]
+enabled = true
+
+[nginx-limit-req]
+enabled = true
+filter = nginx-limit-req
+logpath = /var/log/nginx/error.log
+maxretry = 10
+EOF
+
+# Redémarrer Fail2Ban
+sudo systemctl restart fail2ban
+```
+
+### Mise à jour automatique
+
+```bash
+# Installer unattended-upgrades
+sudo apt install unattended-upgrades
+
+# Configuration
+sudo dpkg-reconfigure -plow unattended-upgrades
+```
+
+## 📊 Monitoring
+
+### Logs à surveiller
+
+```bash
+# Logs Nginx
+sudo tail -f /var/log/nginx/access.log
+sudo tail -f /var/log/nginx/error.log
+
+# Logs PHP-FPM
+sudo tail -f /var/log/php8.1-fpm.log
+
+# Logs de l'application
+sudo tail -f /var/www/dlpz.fr/backend/var/log/prod.log
+```
+
+### Métriques système
+
+```bash
+# Utilisation disque
 df -h
 
-# Utilisation des ports
-sudo netstat -tlnp | grep :3002
-sudo netstat -tlnp | grep :443
-```
+# Utilisation mémoire
+free -h
 
-## 🔒 Sécurité
+# Processus
+ps aux | grep -E "(nginx|php-fpm)"
 
-### Configuration de sécurité
-
-L'application est configurée avec :
-
-- **HTTPS** obligatoire avec certificats SSL
-- **Headers de sécurité** (HSTS, CSP, X-Frame-Options, etc.)
-- **Rate limiting** pour l'API et les uploads
-- **Validation des fichiers** uploadés
-- **Sanitisation des entrées** utilisateur
-- **Protection contre les attaques** courantes
-
-### Mise à jour de sécurité
-
-```bash
-# Mise à jour du système
-sudo apt update && sudo apt upgrade -y
-
-# Mise à jour des certificats SSL
-sudo certbot renew --dry-run
-
-# Mise à jour de l'application
-cd /var/www/dlpz
-git pull origin main
-sudo ./scripts/manage-service.sh update
+# Connexions réseau
+netstat -tulpn | grep -E "(80|443|9000)"
 ```
 
 ## 🚨 Dépannage
 
 ### Problèmes courants
 
-#### 1. Service backend ne démarre pas
+#### 502 Bad Gateway
 
 ```bash
-# Vérifier les logs
-sudo journalctl -u dlpz-backend -n 50
-
-# Vérifier les permissions
-sudo chown -R www-data:www-data /var/www/dlpz/backend
-
-# Vérifier la configuration
-sudo ./scripts/manage-service.sh health
-```
-
-#### 2. Erreurs nginx
-
-```bash
-# Tester la configuration
-sudo nginx -t
+# Vérifier PHP-FPM
+sudo systemctl status php8.1-fpm
 
 # Vérifier les logs
 sudo tail -f /var/log/nginx/error.log
-
-# Recharger la configuration
-sudo systemctl reload nginx
+sudo tail -f /var/log/php8.1-fpm.log
 ```
 
-#### 3. Problèmes de certificats SSL
-
-```bash
-# Renouveler les certificats
-sudo certbot renew
-
-# Vérifier les certificats
-sudo certbot certificates
-```
-
-#### 4. Problèmes de permissions
+#### Erreurs de permissions
 
 ```bash
 # Corriger les permissions
-sudo chown -R www-data:www-data /var/www/dlpz
-sudo chmod -R 755 /var/www/dlpz
-sudo chmod -R 644 /var/www/dlpz/backend/uploads
+sudo chown -R www-data:www-data /var/www/dlpz.fr
+sudo chmod -R 755 /var/www/dlpz.fr
+sudo chmod -R 777 /var/www/dlpz.fr/backend/var
 ```
 
-### Logs utiles
+#### Problèmes SSL
 
 ```bash
-# Logs système
-sudo journalctl -xe
+# Vérifier le certificat
+sudo certbot certificates
 
-# Logs nginx
-sudo tail -f /var/log/nginx/access.log
-sudo tail -f /var/log/nginx/error.log
-
-# Logs de l'application
-sudo tail -f /var/www/dlpz/logs/backend.log
-sudo tail -f /var/www/dlpz/logs/backend-error.log
+# Renouveler le certificat
+sudo certbot renew --force-renewal
 ```
 
-## 📈 Optimisation
-
-### Performance
-
-- **Cache nginx** : Configuration optimisée pour les assets statiques
-- **Compression gzip** : Activée pour tous les contenus textuels
-- **Rate limiting** : Protection contre les abus
-- **Headers de cache** : Optimisation du cache navigateur
-
-### Monitoring
-
-- **Logs structurés** : Format JSON pour l'analyse
-- **Métriques de santé** : Endpoint `/api/health`
-- **Sauvegardes automatiques** : Protection des données
-- **Alertes système** : Monitoring des ressources
-
-## 🔄 Mise à jour
-
-### Processus de mise à jour
+### Commandes utiles
 
 ```bash
-# 1. Sauvegarde
-sudo ./scripts/backup.sh daily
+# Redémarrer tous les services
+sudo systemctl restart nginx php8.1-fpm
 
-# 2. Mise à jour du code
-cd /var/www/dlpz
-git pull origin main
+# Vider le cache Symfony
+cd /var/www/dlpz.fr/backend
+php bin/console cache:clear --env=prod
 
-# 3. Mise à jour des dépendances
-cd frontend && npm ci
-cd ../backend && npm ci --production
+# Vérifier la configuration Nginx
+sudo nginx -t
 
-# 4. Rebuild du frontend
-cd ../frontend && npm run build
-sudo cp -r dist/* /var/www/dlpz/frontend/app/dist/
-
-# 5. Redémarrage des services
-sudo ./scripts/manage-service.sh restart
-sudo systemctl reload nginx
-
-# 6. Vérification
-sudo ./scripts/manage-service.sh health
+# Tester la configuration PHP
+php -m | grep -E "(mbstring|xml|curl|zip)"
 ```
 
 ## 📞 Support
 
 En cas de problème :
 
-1. **Vérifier les logs** : `sudo ./scripts/manage-service.sh logs`
-2. **Vérifier la santé** : `sudo ./scripts/manage-service.sh health`
-3. **Vérifier nginx** : `sudo nginx -t`
-4. **Consulter la documentation** : Ce fichier et les README
-5. **Créer une issue** : Sur le repository GitHub
+1. Vérifier les logs d'erreur
+2. Consulter la documentation
+3. Créer une issue sur GitHub
+4. Contacter le support
 
 ---
 
-**Note** : Ce guide est conçu pour un déploiement de production. Adaptez les configurations selon vos besoins spécifiques.
+**Note** : Ce guide est conçu pour un déploiement sur VPS OVH. Adaptez les configurations selon votre environnement.

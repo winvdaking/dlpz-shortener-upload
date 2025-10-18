@@ -1,20 +1,30 @@
 openapi: 3.0.3
 info:
-  title: URL Shortener API
+  title: DLPZ Shortener API
   description: |
-    API de raccourcissement d'URL développée avec Symfony.
+    API REST pour le raccourcissement d'URLs développée avec Symfony.
     
-    Cette API permet de :
-    - Raccourcir des URLs longues en codes courts uniques
-    - Rediriger automatiquement vers les URLs originales
-    - Gérer les statistiques de clics
-    - Lister et supprimer les URLs raccourcies
+    ## Fonctionnalités
+    - Raccourcissement d'URLs avec codes courts de 6 caractères
+    - Stockage JSON sans base de données
+    - Statistiques de clics
+    - Gestion complète des URLs (CRUD)
+    - Redirection automatique
     
-    Toutes les données sont stockées dans des fichiers JSON, sans base de données.
+    ## Format des données
+    Toutes les dates sont au format ISO 8601 (UTC) : `2025-01-18T12:00:00Z`
+    
+    ## Codes de réponse
+    - `201` : Création réussie
+    - `200` : Succès
+    - `400` : Erreur de validation
+    - `404` : Ressource non trouvée
+    - `500` : Erreur serveur
   version: 1.0.0
   contact:
-    name: Support API
-    email: support@dlpz.fr
+    name: Dorian Lopez
+    url: https://dorianlopez.fr
+    email: contact@dorianlopez.fr
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -30,8 +40,6 @@ paths:
     post:
       summary: Raccourcir une URL
       description: Crée un code court unique pour une URL longue
-      tags:
-        - URLs
       requestBody:
         required: true
         content:
@@ -44,17 +52,7 @@ paths:
                 url:
                   type: string
                   format: uri
-                  description: URL à raccourcir
-                  example: "https://www.example.com/very/long/url/with/many/parameters"
-            examples:
-              valid_url:
-                summary: URL valide
-                value:
-                  url: "https://www.example.com/very/long/url"
-              url_without_protocol:
-                summary: URL sans protocole
-                value:
-                  url: "www.example.com"
+                  example: "https://example.com"
       responses:
         '201':
           description: URL raccourcie avec succès
@@ -63,90 +61,59 @@ paths:
               schema:
                 type: object
                 properties:
-                  shortCode:
-                    type: string
-                    description: Code court généré
-                    example: "abc123"
                   shortUrl:
                     type: string
-                    format: uri
-                    description: URL raccourcie complète
                     example: "https://dlpz.fr/abc123"
-                  original:
-                    type: string
-                    format: uri
-                    description: URL originale
-                    example: "https://www.example.com/very/long/url"
-                  createdAt:
-                    type: string
-                    format: date-time
-                    description: Date de création
-                    example: "2024-01-01 12:00:00"
-                  clicks:
-                    type: integer
-                    description: Nombre de clics
-                    example: 0
         '400':
-          description: Erreur de validation
+          description: URL invalide
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                invalid_url:
-                  summary: URL invalide
-                  value:
-                    error: "L'URL fournie n'est pas valide."
-                missing_url:
-                  summary: URL manquante
-                  value:
-                    error: "Le champ \"url\" est requis"
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "URL invalide"
         '500':
           description: Erreur interne du serveur
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Une erreur interne s'est produite"
 
-  /{shortCode}:
+  /{code}:
     get:
       summary: Rediriger vers l'URL originale
       description: Redirige automatiquement vers l'URL originale associée au code court
-      tags:
-        - Redirection
       parameters:
-        - name: shortCode
+        - name: code
           in: path
           required: true
-          description: Code court de l'URL
           schema:
             type: string
-            pattern: '^[a-zA-Z0-9]{6}$'
-            example: "abc123"
+          example: "abc123"
       responses:
         '301':
           description: Redirection vers l'URL originale
-          headers:
-            Location:
-              description: URL de destination
-              schema:
-                type: string
-                format: uri
         '404':
           description: Code court introuvable
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                error: "Code court introuvable"
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Code court introuvable"
 
   /api/urls:
     get:
-      summary: Lister toutes les URLs
-      description: Retourne la liste de toutes les URLs raccourcies
-      tags:
-        - URLs
+      summary: Obtenir toutes les URLs
+      description: Retourne la liste de toutes les URLs stockées
       responses:
         '200':
           description: Liste des URLs
@@ -155,38 +122,43 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/UrlData'
-              example:
-                - original: "https://www.example.com/url1"
-                  short: "abc123"
-                  createdAt: "2024-01-01 12:00:00"
-                  clicks: 5
-                - original: "https://www.example.com/url2"
-                  short: "def456"
-                  createdAt: "2024-01-01 13:00:00"
-                  clicks: 10
+                  type: object
+                  properties:
+                    code:
+                      type: string
+                      example: "abc123"
+                    original:
+                      type: string
+                      example: "https://example.com"
+                    createdAt:
+                      type: string
+                      format: date-time
+                      example: "2025-01-18T12:00:00Z"
+                    clicks:
+                      type: integer
+                      example: 5
         '500':
           description: Erreur interne du serveur
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Une erreur interne s'est produite"
 
-  /api/urls/{shortCode}:
+  /api/urls/{code}:
     delete:
       summary: Supprimer une URL
-      description: Supprime une URL raccourcie par son code court
-      tags:
-        - URLs
+      description: Supprime une URL raccourcie du système
       parameters:
-        - name: shortCode
+        - name: code
           in: path
           required: true
-          description: Code court de l'URL à supprimer
           schema:
             type: string
-            pattern: '^[a-zA-Z0-9]{6}$'
-            example: "abc123"
+          example: "abc123"
       responses:
         '200':
           description: URL supprimée avec succès
@@ -198,66 +170,87 @@ paths:
                   deleted:
                     type: boolean
                     example: true
-                  message:
-                    type: string
-                    example: "URL supprimée avec succès"
         '404':
           description: Code court introuvable
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Code court introuvable"
         '500':
           description: Erreur interne du serveur
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Une erreur interne s'est produite"
 
-  /api/urls/{shortCode}/stats:
+  /api/urls/{code}/stats:
     get:
-      summary: Statistiques d'une URL
-      description: Retourne les statistiques détaillées d'une URL raccourcie
-      tags:
-        - URLs
+      summary: Obtenir les statistiques d'une URL
+      description: Récupère les statistiques détaillées d'une URL raccourcie
       parameters:
-        - name: shortCode
+        - name: code
           in: path
           required: true
-          description: Code court de l'URL
           schema:
             type: string
-            pattern: '^[a-zA-Z0-9]{6}$'
-            example: "abc123"
+          example: "abc123"
       responses:
         '200':
           description: Statistiques de l'URL
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UrlData'
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "abc123"
+                  original:
+                    type: string
+                    example: "https://example.com"
+                  createdAt:
+                    type: string
+                    format: date-time
+                    example: "2025-01-18T12:00:00Z"
+                  clicks:
+                    type: integer
+                    example: 15
         '404':
           description: Code court introuvable
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Code court introuvable"
         '500':
           description: Erreur interne du serveur
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Une erreur interne s'est produite"
 
   /api/health:
     get:
-      summary: Vérification de santé
-      description: Vérifie l'état de l'API
-      tags:
-        - Système
+      summary: Vérifier l'état de l'API
+      description: Endpoint de santé pour vérifier que l'API fonctionne
       responses:
         '200':
-          description: API opérationnelle
+          description: API en bon état
           content:
             application/json:
               schema:
@@ -269,57 +262,7 @@ paths:
                   timestamp:
                     type: string
                     format: date-time
-                    example: "2024-01-01 12:00:00"
+                    example: "2025-01-18 10:30:00"
                   service:
                     type: string
                     example: "URL Shortener API"
-
-components:
-  schemas:
-    UrlData:
-      type: object
-      properties:
-        original:
-          type: string
-          format: uri
-          description: URL originale
-          example: "https://www.example.com/very/long/url"
-        short:
-          type: string
-          description: Code court
-          example: "abc123"
-        createdAt:
-          type: string
-          format: date-time
-          description: Date de création
-          example: "2024-01-01 12:00:00"
-        clicks:
-          type: integer
-          description: Nombre de clics
-          example: 15
-
-    Error:
-      type: object
-      properties:
-        error:
-          type: string
-          description: Message d'erreur
-          example: "Code court introuvable"
-
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-
-tags:
-  - name: URLs
-    description: Gestion des URLs raccourcies
-  - name: Redirection
-    description: Redirection automatique
-  - name: Système
-    description: Endpoints système
-
-externalDocs:
-  description: Documentation complète
-  url: https://github.com/votre-repo/url-shortener

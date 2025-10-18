@@ -36,3 +36,8 @@ services:
         arguments:
             $baseUrl: '%env(BASE_URL)%'
             $shortCodeLength: '%env(int:SHORT_CODE_LENGTH)%'
+
+    # Configuration du listener CORS
+    App\EventListener\CorsListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.response, method: onKernelResponse }
