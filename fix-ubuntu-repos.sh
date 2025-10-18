@@ -49,19 +49,19 @@ log "Mise à jour des sources.list..."
 # Sauvegarder l'ancien fichier
 cp /etc/apt/sources.list /etc/apt/sources.list.backup.$(date +%Y%m%d-%H%M%S)
 
-# Créer un nouveau sources.list avec des dépôts valides
+# Créer un nouveau sources.list avec des dépôts valides pour Ubuntu 24.10
 cat > /etc/apt/sources.list << 'EOF'
-# Ubuntu 22.04 LTS (Jammy Jellyfish) - Dépôts officiels
-deb http://archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse
-deb http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe multiverse
-deb http://archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse
-deb http://security.ubuntu.com/ubuntu/ jammy-security main restricted universe multiverse
+# Ubuntu 24.10 (Noble Numbat) - Dépôts officiels
+deb http://archive.ubuntu.com/ubuntu/ noble main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ noble-updates main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ noble-backports main restricted universe multiverse
+deb http://security.ubuntu.com/ubuntu/ noble-security main restricted universe multiverse
 
 # Dépôts pour les sources
-deb-src http://archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse
-deb-src http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe multiverse
-deb-src http://archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse
-deb-src http://security.ubuntu.com/ubuntu/ jammy-security main restricted universe multiverse
+deb-src http://archive.ubuntu.com/ubuntu/ noble main restricted universe multiverse
+deb-src http://archive.ubuntu.com/ubuntu/ noble-updates main restricted universe multiverse
+deb-src http://archive.ubuntu.com/ubuntu/ noble-backports main restricted universe multiverse
+deb-src http://security.ubuntu.com/ubuntu/ noble-security main restricted universe multiverse
 EOF
 
 success "Sources.list mis à jour"
@@ -69,14 +69,12 @@ success "Sources.list mis à jour"
 # 3. Supprimer les PPA problématiques
 log "Suppression des PPA problématiques..."
 
-# Supprimer le PPA ondrej/php s'il existe
-if [ -f /etc/apt/sources.list.d/ondrej-ubuntu-php-jammy.list ]; then
-    rm /etc/apt/sources.list.d/ondrej-ubuntu-php-jammy.list
-    warning "PPA ondrej/php supprimé"
-fi
+# Supprimer les PPA ondrej/php s'ils existent (toutes versions)
+find /etc/apt/sources.list.d/ -name "*ondrej*php*" -delete
+warning "PPA ondrej/php supprimés"
 
 # Supprimer d'autres PPA potentiellement problématiques
-find /etc/apt/sources.list.d/ -name "*.list" -exec grep -l "oracular\|ondrej" {} \; | xargs -r rm -f
+find /etc/apt/sources.list.d/ -name "*.list" -exec grep -l "oracular\|jammy" {} \; | xargs -r rm -f
 
 success "PPA problématiques supprimés"
 
@@ -87,7 +85,7 @@ log "Ajout du PPA ondrej/php (version correcte)..."
 apt update
 apt install -y software-properties-common
 
-# Ajouter le PPA ondrej/php pour Ubuntu 22.04
+# Ajouter le PPA ondrej/php pour Ubuntu 24.10
 add-apt-repository -y ppa:ondrej/php
 
 success "PPA ondrej/php ajouté correctement"

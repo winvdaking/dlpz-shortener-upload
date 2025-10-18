@@ -1,13 +1,21 @@
 #!/bin/bash
 
 # Script de déploiement pour DLPZ Shortener
-# Usage: ./deploy.sh [environment]
+# Usage: ./deploy.sh [environment] [--fix-repos-only]
 # Environment: dev, staging, production (défaut: production)
+# --fix-repos-only: Corriger uniquement les dépôts Ubuntu
 
 set -e  # Arrêter en cas d'erreur
 
 # Configuration
 ENVIRONMENT=${1:-production}
+FIX_REPOS_ONLY=false
+
+# Vérifier les arguments
+if [[ "$2" == "--fix-repos-only" ]]; then
+    FIX_REPOS_ONLY=true
+fi
+
 PROJECT_DIR="/var/www/dlpz.fr"
 BACKUP_DIR="/var/backups/dlpz.fr"
 LOG_FILE="/var/log/dlpz-deploy.log"
@@ -37,6 +45,81 @@ warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1" | tee -a "$LOG_FILE"
 }
 
+# Correction des dépôts Ubuntu
+fix_ubuntu_repos() {
+    log "Correction des dépôts Ubuntu..."
+    
+    # Nettoyer les caches apt
+    apt clean
+    apt autoclean
+    rm -rf /var/lib/apt/lists/*
+    
+    # Corriger sources.list pour Ubuntu 24.10
+    if grep -q "oracular\|jammy" /etc/apt/sources.list; then
+        log "Correction du fichier sources.list..."
+        cp /etc/apt/sources.list /etc/apt/sources.list.backup.$(date +%Y%m%d-%H%M%S)
+        sed -i 's/oracular/noble/g' /etc/apt/sources.list
+        sed -i 's/jammy/noble/g' /etc/apt/sources.list
+        success "Sources.list corrigé"
+    fi
+    
+    # Supprimer les PPA problématiques
+    find /etc/apt/sources.list.d/ -name "*ondrej*php*" -delete 2>/dev/null || true
+    find /etc/apt/sources.list.d/ -name "*.list" -exec grep -l "oracular\|jammy" {} \; 2>/dev/null | xargs -r rm -f
+    
+    # Mettre à jour les listes
+    apt update
+    
+    success "Dépôts Ubuntu corrigés"
+}
+
+# Installation des dépendances système
+install_system_deps() {
+    log "Installation des dépendances système..."
+    
+    # Installer les outils de base
+    apt install -y software-properties-common curl wget unzip
+    
+    # Ajouter le PPA ondrej/php pour Ubuntu 24.10
+    add-apt-repository -y ppa:ondrej/php
+    
+    # Mettre à jour les listes
+    apt update
+    
+    # Installer PHP 8.1 et extensions
+    apt install -y \
+        php8.1 \
+        php8.1-cli \
+        php8.1-fpm \
+        php8.1-common \
+        php8.1-mysql \
+        php8.1-xml \
+        php8.1-xmlrpc \
+        php8.1-curl \
+        php8.1-gd \
+        php8.1-imagick \
+        php8.1-dev \
+        php8.1-imap \
+        php8.1-mbstring \
+        php8.1-opcache \
+        php8.1-soap \
+        php8.1-zip \
+        php8.1-intl \
+        php8.1-bcmath
+    
+    # Installer les autres dépendances
+    apt install -y \
+        nginx \
+        composer \
+        git \
+        nodejs \
+        npm \
+        certbot \
+        python3-certbot-nginx
+    
+    success "Dépendances système installées"
+}
+
 # Vérification des prérequis
 check_prerequisites() {
     log "Vérification des prérequis..."
@@ -46,10 +129,15 @@ check_prerequisites() {
         error "Ce script doit être exécuté en tant que root ou avec sudo"
     fi
     
+    # Vérifier la version Ubuntu
+    if ! lsb_release -d | grep -q "Ubuntu 24.10"; then
+        warning "Ce script est optimisé pour Ubuntu 24.10. Version détectée: $(lsb_release -d | cut -f2)"
+    fi
+    
     # Vérifier les commandes nécessaires
-    for cmd in git composer npm php nginx systemctl; do
+    for cmd in git composer npm php8.1 nginx systemctl; do
         if ! command -v $cmd &> /dev/null; then
-            error "Commande manquante: $cmd"
+            warning "Commande manquante: $cmd - Installation en cours..."
         fi
     done
     
@@ -208,10 +296,22 @@ setup_nginx() {
 setup_php_fpm() {
     log "Configuration PHP-FPM..."
     
+    # Vérifier si PHP-FPM est installé et configuré
+    if ! systemctl is-active --quiet php8.1-fpm; then
+        log "Installation et configuration de PHP-FPM..."
+        apt install -y php8.1-fpm
+        systemctl enable php8.1-fpm
+    fi
+    
     # Redémarrer PHP-FPM
     systemctl restart php8.1-fpm
     
-    success "PHP-FPM redémarré"
+    # Vérifier le statut
+    if systemctl is-active --quiet php8.1-fpm; then
+        success "PHP-FPM redémarré et actif"
+    else
+        error "Échec du démarrage de PHP-FPM"
+    fi
 }
 
 # Tests de déploiement
@@ -254,24 +354,36 @@ cleanup() {
 
 # Fonction principale
 main() {
-    log "Début du déploiement DLPZ Shortener (environnement: $ENVIRONMENT)"
-    
-    check_prerequisites
-    create_directories
-    backup_current
-    update_code
-    install_backend_deps
-    install_frontend_deps
-    setup_environment
-    build_frontend
-    setup_permissions
-    setup_nginx
-    setup_php_fpm
-    run_tests
-    cleanup
-    
-    success "Déploiement terminé avec succès !"
-    log "Application disponible sur: https://dlpz.fr"
+    if [[ "$FIX_REPOS_ONLY" == "true" ]]; then
+        log "Correction des dépôts Ubuntu uniquement..."
+        fix_ubuntu_repos
+        install_system_deps
+        success "Correction des dépôts terminée !"
+        log "Vous pouvez maintenant exécuter le déploiement complet avec: ./deploy.sh $ENVIRONMENT"
+    else
+        log "Début du déploiement DLPZ Shortener (environnement: $ENVIRONMENT)"
+        
+        # Correction des dépôts Ubuntu en premier
+        fix_ubuntu_repos
+        install_system_deps
+        
+        check_prerequisites
+        create_directories
+        backup_current
+        update_code
+        install_backend_deps
+        install_frontend_deps
+        setup_environment
+        build_frontend
+        setup_permissions
+        setup_nginx
+        setup_php_fpm
+        run_tests
+        cleanup
+        
+        success "Déploiement terminé avec succès !"
+        log "Application disponible sur: https://dlpz.fr"
+    fi
 }
 
 # Gestion des erreurs
