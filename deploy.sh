@@ -99,14 +99,23 @@ install_system_deps() {
     # Installer les outils de base
     apt install -y software-properties-common curl wget unzip
     
-    # Ajouter le PPA ondrej/php (compatible avec Ubuntu 24.04 LTS)
-    log "Ajout du PPA ondrej/php..."
-    add-apt-repository -y ppa:ondrej/php
+    # Ajouter le PPA ondrej/php (forcer la version noble)
+    log "Ajout du PPA ondrej/php (version noble)..."
     
-    # Vérifier qu'aucun PPA problématique n'a été ajouté
-    if find /etc/apt/sources.list.d/ -name "*.list" -exec grep -l "oracular\|jammy" {} \; 2>/dev/null | grep -q .; then
-        warning "PPA problématiques détectés après ajout, suppression..."
-        find /etc/apt/sources.list.d/ -name "*.list" -exec grep -l "oracular\|jammy" {} \; 2>/dev/null | xargs -r rm -f
+    # Forcer l'ajout du PPA avec la version noble au lieu d'oracular
+    add-apt-repository -y "ppa:ondrej/php" || {
+        # Si l'ajout automatique échoue, créer manuellement le fichier
+        log "Création manuelle du PPA ondrej/php pour noble..."
+        cat > /etc/apt/sources.list.d/ondrej-ubuntu-php-noble.list << 'EOF'
+deb https://ppa.launchpadcontent.net/ondrej/php/ubuntu noble main
+# deb-src https://ppa.launchpadcontent.net/ondrej/php/ubuntu noble main
+EOF
+    }
+    
+    # Vérifier et corriger si nécessaire
+    if find /etc/apt/sources.list.d/ -name "*.list" -exec grep -l "oracular" {} \; 2>/dev/null | grep -q .; then
+        warning "PPA oracular détecté, correction en cours..."
+        find /etc/apt/sources.list.d/ -name "*.list" -exec sed -i 's/oracular/noble/g' {} \;
     fi
     
     # Mettre à jour les listes
