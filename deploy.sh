@@ -66,9 +66,25 @@ fix_ubuntu_repos() {
         success "Sources.list corrigé (utilise Ubuntu 24.04 LTS - noble)"
     fi
     
-    # Supprimer les PPA problématiques
-    find /etc/apt/sources.list.d/ -name "*ondrej*php*" -delete 2>/dev/null || true
+    # Supprimer TOUS les PPA problématiques (plus agressif)
+    log "Suppression de tous les PPA problématiques..."
+    
+    # Supprimer tous les fichiers ondrej
+    rm -f /etc/apt/sources.list.d/*ondrej* 2>/dev/null || true
+    
+    # Supprimer tous les fichiers oracular
+    rm -f /etc/apt/sources.list.d/*oracular* 2>/dev/null || true
+    
+    # Supprimer tous les fichiers jammy
+    rm -f /etc/apt/sources.list.d/*jammy* 2>/dev/null || true
+    
+    # Supprimer les fichiers qui contiennent oracular ou jammy
     find /etc/apt/sources.list.d/ -name "*.list" -exec grep -l "oracular\|jammy" {} \; 2>/dev/null | xargs -r rm -f
+    
+    # Supprimer aussi les fichiers cachés
+    find /etc/apt/sources.list.d/ -name ".*" -exec grep -l "oracular\|jammy" {} \; 2>/dev/null | xargs -r rm -f
+    
+    success "PPA problématiques supprimés"
     
     # Mettre à jour les listes
     apt update
@@ -83,8 +99,15 @@ install_system_deps() {
     # Installer les outils de base
     apt install -y software-properties-common curl wget unzip
     
-    # Ajouter le PPA ondrej/php pour Ubuntu 24.10
+    # Ajouter le PPA ondrej/php (compatible avec Ubuntu 24.04 LTS)
+    log "Ajout du PPA ondrej/php..."
     add-apt-repository -y ppa:ondrej/php
+    
+    # Vérifier qu'aucun PPA problématique n'a été ajouté
+    if find /etc/apt/sources.list.d/ -name "*.list" -exec grep -l "oracular\|jammy" {} \; 2>/dev/null | grep -q .; then
+        warning "PPA problématiques détectés après ajout, suppression..."
+        find /etc/apt/sources.list.d/ -name "*.list" -exec grep -l "oracular\|jammy" {} \; 2>/dev/null | xargs -r rm -f
+    fi
     
     # Mettre à jour les listes
     apt update
