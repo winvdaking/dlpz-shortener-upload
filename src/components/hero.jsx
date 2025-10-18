@@ -16,6 +16,7 @@ import ThemeToggle from './theme-toggle';
 import { useTheme } from '../contexts/ThemeContext';
 import UrlForm from './UrlForm';
 import AllUrlsModal from './AllUrlsModal';
+import ApiStatusBadge from './ApiStatusBadge';
 
 export default function Hero({
   isLoading,
@@ -337,17 +338,21 @@ export default function Hero({
           />
         </div>
 
-        <p className="text-black/50 dark:text-white/50">
-          dlpz.fr © {new Date().getFullYear()} - Tous droits réservés{' '}
-          <a
-            href="https://dorianlopez.fr"
-            target="_blank"
-            rel="noreferrer"
-            className="text-black/50 hover:text-white text-xs font-light px-3 py-2 rounded-full hover:bg-white/10 transition-all duration-200 dark:text-white/50"
-          >
-            <Zap className="w-4 h-4 inline" /> dorianlopez.fr
-          </a>
-        </p>
+        <div className="flex items-center gap-4">
+          <p className="text-black/50 dark:text-white/50">
+            dlpz.fr © {new Date().getFullYear()} - Tous droits réservés{' '}
+            <a
+              href="https://dorianlopez.fr"
+              target="_blank"
+              rel="noreferrer"
+              className="text-black/50 hover:text-white text-xs font-light px-3 py-2 rounded-full hover:bg-white/10 transition-all duration-200 dark:text-white/50"
+            >
+              <Zap className="w-4 h-4 inline" /> dorianlopez.fr
+            </a>
+          </p>
+          
+          <ApiStatusBadge />
+        </div>
 
         <div className="w-8 h-8"></div>
       </footer>

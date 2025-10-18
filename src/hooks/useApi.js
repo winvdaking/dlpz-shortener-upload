@@ -1,16 +1,14 @@
-import { useState, useCallback } from "react";
-import { shortenUrl, getAllUrls, deleteUrl, checkApiHealth } from "../config/api";
-import { useAlert } from "../contexts/AlertContext";
+import { useState, useCallback } from 'react';
+import { shortenUrl, getAllUrls, deleteUrl, checkApiHealth } from '../config/api';
 
 /**
  * Hook personnalisé pour gérer les appels API
  */
 export const useApi = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { showError, showSuccess } = useAlert();
 
   const handleApiCall = useCallback(
-    async (apiCall, onSuccess, onError, successMessage) => {
+    async (apiCall, onSuccess, onError) => {
       setIsLoading(true);
 
       try {
@@ -18,13 +16,9 @@ export const useApi = () => {
         if (onSuccess) {
           onSuccess(result);
         }
-        if (successMessage) {
-          showSuccess(successMessage);
-        }
         return result;
       } catch (err) {
-        const errorMessage = err.message || "Une erreur est survenue";
-        showError(errorMessage);
+        console.error('Erreur API:', err.message || 'Une erreur est survenue');
         if (onError) {
           onError(err);
         }
@@ -33,7 +27,7 @@ export const useApi = () => {
         setIsLoading(false);
       }
     },
-    [showError, showSuccess]
+    []
   );
 
   return {
@@ -57,18 +51,16 @@ export const useUrlShortener = () => {
           if (data.success && data.shortUrl) {
             setResult(data.shortUrl);
           } else {
-            throw new Error(data.message || "Échec du raccourcissement");
+            throw new Error(data.message || 'Échec du raccourcissement');
           }
-        },
-        null,
-        "URL raccourcie avec succès !"
+        }
       );
     },
     [handleApiCall]
   );
 
   const clearResult = useCallback(() => {
-    setResult("");
+    setResult('');
   }, []);
 
   return {
@@ -93,7 +85,7 @@ export const useUrlManager = () => {
         if (data.success) {
           setUrls(data.urls || []);
         } else {
-          throw new Error(data.message || "Échec du chargement");
+          throw new Error(data.message || 'Échec du chargement');
         }
       }
     );
@@ -106,11 +98,9 @@ export const useUrlManager = () => {
         if (data.success) {
           setUrls(prev => prev.filter(url => url.code !== code));
         } else {
-          throw new Error(data.message || "Échec de la suppression");
+          throw new Error(data.message || 'Échec de la suppression');
         }
-      },
-      null,
-      "URL supprimée avec succès !"
+      }
     );
   }, [handleApiCall]);
 
@@ -134,7 +124,7 @@ export const useApiHealth = () => {
       await handleApiCall(
         () => checkApiHealth(),
         (data) => {
-          setIsHealthy(data.status === "OK");
+          setIsHealthy(data.status === 'OK');
         }
       );
       return true;

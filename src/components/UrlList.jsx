@@ -1,15 +1,13 @@
-import { useState, useEffect } from "react";
-import { getAllUrls } from "../config/api";
-import { useAlert } from "../contexts/AlertContext";
-import UrlItem from "./UrlItem";
-import UrlDetailsModal from "./UrlDetailsModal";
+import { useState, useEffect } from 'react';
+import { getAllUrls } from '../config/api';
+import UrlItem from './UrlItem';
+import UrlDetailsModal from './UrlDetailsModal';
 
 const UrlList = () => {
   const [urls, setUrls] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedUrl, setSelectedUrl] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { showError } = useAlert();
 
   const loadUrls = async () => {
     try {
@@ -17,8 +15,7 @@ const UrlList = () => {
       const response = await getAllUrls();
       setUrls(response.urls || []);
     } catch (error) {
-      showError("Erreur lors du chargement des URLs");
-      console.error("Erreur:", error);
+      console.error('Erreur lors du chargement des URLs:', error);
     } finally {
       setIsLoading(false);
     }
@@ -68,7 +65,7 @@ const UrlList = () => {
           Vos URLs raccourcies
         </h2>
         <p className="text-gray-600 dark:text-gray-400">
-          {urls.length} URL{urls.length > 1 ? "s" : ""} raccourcie{urls.length > 1 ? "s" : ""}
+          {urls.length} URL{urls.length > 1 ? 's' : ''} raccourcie{urls.length > 1 ? 's' : ''}
         </p>
       </div>
       

@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import SEO from './components/SEO';
-import AlertContainer from './components/AlertContainer';
 import Hero from './components/hero';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { AlertProvider } from './contexts/AlertContext';
 import { useUrlShortener, useUrlManager } from './hooks/useApi';
 
 // Composant interne qui utilise les hooks
@@ -61,9 +59,6 @@ function AppContent() {
         handleCopy={handleCopy}
         recentUrls={urlManager.urls}
       />
-
-
-      <AlertContainer />
     </div>
   );
 }
@@ -71,11 +66,9 @@ function AppContent() {
 function App() {
   return (
     <HelmetProvider>
-      <AlertProvider>
-        <ThemeProvider>
-          <AppContent />
-        </ThemeProvider>
-      </AlertProvider>
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
     </HelmetProvider>
   );
 }
