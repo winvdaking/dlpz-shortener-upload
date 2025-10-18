@@ -49,9 +49,9 @@ log "Mise à jour des sources.list..."
 # Sauvegarder l'ancien fichier
 cp /etc/apt/sources.list /etc/apt/sources.list.backup.$(date +%Y%m%d-%H%M%S)
 
-# Créer un nouveau sources.list avec des dépôts valides pour Ubuntu 24.10
+# Créer un nouveau sources.list avec des dépôts valides (Ubuntu 24.04 LTS - noble)
 cat > /etc/apt/sources.list << 'EOF'
-# Ubuntu 24.10 (Noble Numbat) - Dépôts officiels
+# Ubuntu 24.04 LTS (Noble Numbat) - Dépôts officiels stables
 deb http://archive.ubuntu.com/ubuntu/ noble main restricted universe multiverse
 deb http://archive.ubuntu.com/ubuntu/ noble-updates main restricted universe multiverse
 deb http://archive.ubuntu.com/ubuntu/ noble-backports main restricted universe multiverse
@@ -85,7 +85,7 @@ log "Ajout du PPA ondrej/php (version correcte)..."
 apt update
 apt install -y software-properties-common
 
-# Ajouter le PPA ondrej/php pour Ubuntu 24.10
+# Ajouter le PPA ondrej/php (compatible avec Ubuntu 24.04 LTS)
 add-apt-repository -y ppa:ondrej/php
 
 success "PPA ondrej/php ajouté correctement"

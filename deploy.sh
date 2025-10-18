@@ -54,13 +54,16 @@ fix_ubuntu_repos() {
     apt autoclean
     rm -rf /var/lib/apt/lists/*
     
-    # Corriger sources.list pour Ubuntu 24.10
+    # Corriger sources.list pour Ubuntu 24.10 (utiliser noble LTS)
     if grep -q "oracular\|jammy" /etc/apt/sources.list; then
-        log "Correction du fichier sources.list..."
+        log "Correction du fichier sources.list (oracular -> noble LTS)..."
         cp /etc/apt/sources.list /etc/apt/sources.list.backup.$(date +%Y%m%d-%H%M%S)
+        
+        # Remplacer oracular par noble (Ubuntu 24.04 LTS stable)
         sed -i 's/oracular/noble/g' /etc/apt/sources.list
         sed -i 's/jammy/noble/g' /etc/apt/sources.list
-        success "Sources.list corrigé"
+        
+        success "Sources.list corrigé (utilise Ubuntu 24.04 LTS - noble)"
     fi
     
     # Supprimer les PPA problématiques
@@ -130,8 +133,11 @@ check_prerequisites() {
     fi
     
     # Vérifier la version Ubuntu
-    if ! lsb_release -d | grep -q "Ubuntu 24.10"; then
-        warning "Ce script est optimisé pour Ubuntu 24.10. Version détectée: $(lsb_release -d | cut -f2)"
+    UBUNTU_VERSION=$(lsb_release -d | cut -f2)
+    log "Version Ubuntu détectée: $UBUNTU_VERSION"
+    
+    if lsb_release -c | grep -q "oracular"; then
+        warning "Ubuntu 24.10 (oracular) détecté - Les dépôts seront redirigés vers Ubuntu 24.04 LTS (noble) pour la stabilité"
     fi
     
     # Vérifier les commandes nécessaires
