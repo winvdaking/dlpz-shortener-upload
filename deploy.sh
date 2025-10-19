@@ -89,62 +89,20 @@ EOF
     success "Dépôts Ubuntu corrigés"
 }
 
-# Installation des dépendances système
-install_system_deps() {
-    log "Installation des dépendances système..."
+# Mise à jour du système
+update_system() {
+    log "Mise à jour du système..."
     
-    # Installer les outils de base
-    apt install -y software-properties-common curl wget unzip
-    
-    # Créer manuellement le PPA ondrej/php pour noble (éviter la détection oracular)
-    log "Création du PPA ondrej/php pour noble..."
-    cat > /etc/apt/sources.list.d/ondrej-ubuntu-php-noble.list << 'EOF'
-deb https://ppa.launchpadcontent.net/ondrej/php/ubuntu noble main
-# deb-src https://ppa.launchpadcontent.net/ondrej/php/ubuntu noble main
-EOF
-    
-    # Ajouter la clé GPG du PPA ondrej
-    log "Ajout de la clé GPG du PPA ondrej..."
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C 2>/dev/null || {
-        # Alternative si apt-key ne fonctionne pas
-        curl -fsSL https://keyserver.ubuntu.com/pks/lookup?op=get\&search=0x4F4EA0AAE5267A6C | apt-key add - 2>/dev/null || true
-    }
-    
-    # Mettre à jour les listes
+    # Mettre à jour les listes de paquets
     apt update
     
-    # Installer PHP 8.1 et extensions
-    apt install -y \
-        php8.1 \
-        php8.1-cli \
-        php8.1-fpm \
-        php8.1-common \
-        php8.1-mysql \
-        php8.1-xml \
-        php8.1-xmlrpc \
-        php8.1-curl \
-        php8.1-gd \
-        php8.1-imagick \
-        php8.1-dev \
-        php8.1-imap \
-        php8.1-mbstring \
-        php8.1-opcache \
-        php8.1-soap \
-        php8.1-zip \
-        php8.1-intl \
-        php8.1-bcmath
+    # Mettre à jour le système
+    apt -y upgrade
     
-    # Installer les autres dépendances
-    apt install -y \
-        nginx \
-        composer \
-        git \
-        nodejs \
-        npm \
-        certbot \
-        python3-certbot-nginx
+    # Installer les outils de base nécessaires
+    apt install -y curl wget unzip git composer nodejs npm nginx certbot python3-certbot-nginx
     
-    success "Dépendances système installées"
+    success "Système mis à jour et outils installés"
 }
 
 # Vérification des prérequis
@@ -165,7 +123,7 @@ check_prerequisites() {
     fi
     
     # Vérifier les commandes nécessaires
-    for cmd in git composer npm php8.1 nginx systemctl; do
+    for cmd in git composer npm php nginx systemctl; do
         if ! command -v $cmd &> /dev/null; then
             warning "Commande manquante: $cmd - Installation en cours..."
         fi
@@ -326,19 +284,23 @@ setup_nginx() {
 setup_php_fpm() {
     log "Configuration PHP-FPM..."
     
+    # Détecter la version PHP installée
+    PHP_VERSION=$(php -v | head -n1 | cut -d' ' -f2 | cut -d'.' -f1,2)
+    PHP_FPM_SERVICE="php${PHP_VERSION}-fpm"
+    
     # Vérifier si PHP-FPM est installé et configuré
-    if ! systemctl is-active --quiet php8.1-fpm; then
+    if ! systemctl is-active --quiet $PHP_FPM_SERVICE; then
         log "Installation et configuration de PHP-FPM..."
-        apt install -y php8.1-fpm
-        systemctl enable php8.1-fpm
+        apt install -y php-fpm
+        systemctl enable $PHP_FPM_SERVICE
     fi
     
     # Redémarrer PHP-FPM
-    systemctl restart php8.1-fpm
+    systemctl restart $PHP_FPM_SERVICE
     
     # Vérifier le statut
-    if systemctl is-active --quiet php8.1-fpm; then
-        success "PHP-FPM redémarré et actif"
+    if systemctl is-active --quiet $PHP_FPM_SERVICE; then
+        success "PHP-FPM redémarré et actif (version $PHP_VERSION)"
     else
         error "Échec du démarrage de PHP-FPM"
     fi
@@ -387,7 +349,7 @@ main() {
     if [[ "$FIX_REPOS_ONLY" == "true" ]]; then
         log "Correction des dépôts Ubuntu uniquement..."
         fix_ubuntu_repos
-        install_system_deps
+        update_system
         success "Correction des dépôts terminée !"
         log "Vous pouvez maintenant exécuter le déploiement complet avec: ./deploy.sh $ENVIRONMENT"
     else
@@ -395,7 +357,7 @@ main() {
         
         # Correction des dépôts Ubuntu en premier
         fix_ubuntu_repos
-        install_system_deps
+        update_system
         
         check_prerequisites
         create_directories
