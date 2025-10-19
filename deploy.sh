@@ -180,11 +180,17 @@ install_backend_deps() {
     
     cd "$PROJECT_DIR/backend"
     
-    # Installation des dépendances Composer
+    # Installation des dépendances Composer (en tant que www-data pour éviter les problèmes de permissions)
     if [ "$ENVIRONMENT" = "production" ]; then
-        composer install --no-dev --optimize-autoloader --no-interaction
+        sudo -u www-data composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
     else
-        composer install --no-interaction
+        sudo -u www-data composer install --no-interaction --no-scripts
+    fi
+    
+    # Exécuter les scripts Symfony manuellement si nécessaire
+    if [ -f "bin/console" ]; then
+        log "Exécution des scripts Symfony..."
+        sudo -u www-data php bin/console cache:clear --env=prod --no-debug 2>/dev/null || true
     fi
     
     success "Dépendances backend installées"
@@ -196,8 +202,8 @@ install_frontend_deps() {
     
     cd "$PROJECT_DIR"
     
-    # Installation des dépendances npm
-    npm ci
+    # Installation des dépendances npm (en tant que www-data)
+    sudo -u www-data npm ci
     
     success "Dépendances frontend installées"
 }
@@ -227,11 +233,8 @@ build_frontend() {
     
     cd "$PROJECT_DIR"
     
-    if [ "$ENVIRONMENT" = "production" ]; then
-        npm run build
-    else
-        npm run build
-    fi
+    # Build en tant que www-data
+    sudo -u www-data npm run build
     
     success "Frontend buildé"
 }
@@ -328,9 +331,11 @@ run_tests() {
 cleanup() {
     log "Nettoyage..."
     
-    # Nettoyer les caches
+    # Nettoyer les caches Symfony
     cd "$PROJECT_DIR/backend"
-    php bin/console cache:clear --env=prod
+    if [ -f "bin/console" ]; then
+        sudo -u www-data php bin/console cache:clear --env=prod --no-debug 2>/dev/null || true
+    fi
     
     # Nettoyer les logs anciens
     find /var/log -name "*.log" -mtime +30 -delete 2>/dev/null || true
