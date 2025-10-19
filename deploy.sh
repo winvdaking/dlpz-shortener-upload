@@ -45,43 +45,40 @@ warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1" | tee -a "$LOG_FILE"
 }
 
-# Correction des dépôts Ubuntu
+# Correction complète des dépôts Ubuntu
 fix_ubuntu_repos() {
-    log "Correction des dépôts Ubuntu..."
+    log "Correction complète des dépôts Ubuntu..."
     
     # Nettoyer les caches apt
     apt clean
     apt autoclean
     rm -rf /var/lib/apt/lists/*
     
-    # Corriger sources.list pour Ubuntu 24.10 (utiliser noble LTS)
-    if grep -q "oracular\|jammy" /etc/apt/sources.list; then
-        log "Correction du fichier sources.list (oracular -> noble LTS)..."
-        cp /etc/apt/sources.list /etc/apt/sources.list.backup.$(date +%Y%m%d-%H%M%S)
-        
-        # Remplacer oracular par noble (Ubuntu 24.04 LTS stable)
-        sed -i 's/oracular/noble/g' /etc/apt/sources.list
-        sed -i 's/jammy/noble/g' /etc/apt/sources.list
-        
-        success "Sources.list corrigé (utilise Ubuntu 24.04 LTS - noble)"
-    fi
+    # Sauvegarder sources.list
+    cp /etc/apt/sources.list /etc/apt/sources.list.backup.$(date +%Y%m%d-%H%M%S)
     
-    # Supprimer TOUS les PPA problématiques (plus agressif)
+    # Créer un nouveau sources.list complètement propre pour Ubuntu 24.04 LTS
+    log "Création d'un nouveau sources.list (Ubuntu 24.04 LTS - noble)..."
+    cat > /etc/apt/sources.list << 'EOF'
+# Ubuntu 24.04 LTS (Noble Numbat) - Dépôts officiels
+deb http://archive.ubuntu.com/ubuntu/ noble main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ noble-updates main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ noble-backports main restricted universe multiverse
+deb http://security.ubuntu.com/ubuntu/ noble-security main restricted universe multiverse
+
+# Dépôts pour les sources
+deb-src http://archive.ubuntu.com/ubuntu/ noble main restricted universe multiverse
+deb-src http://archive.ubuntu.com/ubuntu/ noble-updates main restricted universe multiverse
+deb-src http://archive.ubuntu.com/ubuntu/ noble-backports main restricted universe multiverse
+deb-src http://security.ubuntu.com/ubuntu/ noble-security main restricted universe multiverse
+EOF
+    
+    # Supprimer TOUS les PPA problématiques
     log "Suppression de tous les PPA problématiques..."
-    
-    # Supprimer tous les fichiers ondrej
     rm -f /etc/apt/sources.list.d/*ondrej* 2>/dev/null || true
-    
-    # Supprimer tous les fichiers oracular
     rm -f /etc/apt/sources.list.d/*oracular* 2>/dev/null || true
-    
-    # Supprimer tous les fichiers jammy
     rm -f /etc/apt/sources.list.d/*jammy* 2>/dev/null || true
-    
-    # Supprimer les fichiers qui contiennent oracular ou jammy
     find /etc/apt/sources.list.d/ -name "*.list" -exec grep -l "oracular\|jammy" {} \; 2>/dev/null | xargs -r rm -f
-    
-    # Supprimer aussi les fichiers cachés
     find /etc/apt/sources.list.d/ -name ".*" -exec grep -l "oracular\|jammy" {} \; 2>/dev/null | xargs -r rm -f
     
     success "PPA problématiques supprimés"
@@ -99,24 +96,19 @@ install_system_deps() {
     # Installer les outils de base
     apt install -y software-properties-common curl wget unzip
     
-    # Ajouter le PPA ondrej/php (forcer la version noble)
-    log "Ajout du PPA ondrej/php (version noble)..."
-    
-    # Forcer l'ajout du PPA avec la version noble au lieu d'oracular
-    add-apt-repository -y "ppa:ondrej/php" || {
-        # Si l'ajout automatique échoue, créer manuellement le fichier
-        log "Création manuelle du PPA ondrej/php pour noble..."
-        cat > /etc/apt/sources.list.d/ondrej-ubuntu-php-noble.list << 'EOF'
+    # Créer manuellement le PPA ondrej/php pour noble (éviter la détection oracular)
+    log "Création du PPA ondrej/php pour noble..."
+    cat > /etc/apt/sources.list.d/ondrej-ubuntu-php-noble.list << 'EOF'
 deb https://ppa.launchpadcontent.net/ondrej/php/ubuntu noble main
 # deb-src https://ppa.launchpadcontent.net/ondrej/php/ubuntu noble main
 EOF
-    }
     
-    # Vérifier et corriger si nécessaire
-    if find /etc/apt/sources.list.d/ -name "*.list" -exec grep -l "oracular" {} \; 2>/dev/null | grep -q .; then
-        warning "PPA oracular détecté, correction en cours..."
-        find /etc/apt/sources.list.d/ -name "*.list" -exec sed -i 's/oracular/noble/g' {} \;
-    fi
+    # Ajouter la clé GPG du PPA ondrej
+    log "Ajout de la clé GPG du PPA ondrej..."
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C 2>/dev/null || {
+        # Alternative si apt-key ne fonctionne pas
+        curl -fsSL https://keyserver.ubuntu.com/pks/lookup?op=get\&search=0x4F4EA0AAE5267A6C | apt-key add - 2>/dev/null || true
+    }
     
     # Mettre à jour les listes
     apt update
