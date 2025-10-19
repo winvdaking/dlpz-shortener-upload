@@ -223,6 +223,13 @@ install_frontend_deps() {
         sudo -u www-data npm ci --cache /tmp/.npm-cache --no-optional
     }
     
+    # Installer terser pour Vite (nécessaire pour la minification en production)
+    log "Installation de terser pour Vite..."
+    sudo -u www-data npm install --save-dev terser --cache /tmp/.npm-cache 2>/dev/null || {
+        log "Installation de terser en mode global..."
+        sudo -u www-data npm install -g terser --cache /tmp/.npm-cache
+    }
+    
     success "Dépendances frontend installées"
 }
 
