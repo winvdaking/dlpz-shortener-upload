@@ -16,7 +16,7 @@ function AppContent() {
   // Charger les URLs au démarrage
   useEffect(() => {
     urlManager.loadUrls();
-  }, [urlManager]);
+  }, [urlManager.loadUrls]);
 
   const handleShorten = async (url) => {
     try {
