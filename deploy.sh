@@ -240,14 +240,67 @@ setup_environment() {
     # Backend
     if [ ! -f "$PROJECT_DIR/backend/.env" ]; then
         cp "$PROJECT_DIR/backend/env.example" "$PROJECT_DIR/backend/.env"
-        warning "Fichier .env backend créé - Veuillez le configurer"
+        log "Fichier .env backend créé depuis env.example"
     fi
     
     # Frontend
     if [ ! -f "$PROJECT_DIR/.env.production" ]; then
         cp "$PROJECT_DIR/env.example" "$PROJECT_DIR/.env.production"
-        warning "Fichier .env.production frontend créé - Veuillez le configurer"
+        log "Fichier .env.production frontend créé depuis env.example"
     fi
+    
+    # Configuration automatique pour la production
+    log "Configuration automatique pour la production..."
+    
+    # Backend - Configuration de base
+    if [ -f "$PROJECT_DIR/backend/.env" ]; then
+        # Configurer l'environnement
+        sed -i 's/APP_ENV=dev/APP_ENV=prod/' "$PROJECT_DIR/backend/.env"
+        sed -i 's/APP_DEBUG=true/APP_DEBUG=false/' "$PROJECT_DIR/backend/.env"
+        
+        # Générer un APP_SECRET si nécessaire
+        if ! grep -q "APP_SECRET=" "$PROJECT_DIR/backend/.env" || grep -q "APP_SECRET=ThisTokenIsNotSoSecretChangeIt" "$PROJECT_DIR/backend/.env"; then
+            APP_SECRET=$(openssl rand -hex 32)
+            if grep -q "APP_SECRET=" "$PROJECT_DIR/backend/.env"; then
+                sed -i "s/APP_SECRET=.*/APP_SECRET=$APP_SECRET/" "$PROJECT_DIR/backend/.env"
+            else
+                echo "APP_SECRET=$APP_SECRET" >> "$PROJECT_DIR/backend/.env"
+            fi
+            log "APP_SECRET généré automatiquement"
+        fi
+        
+        # Configurer la base de données (JSON par défaut)
+        if ! grep -q "DATABASE_URL" "$PROJECT_DIR/backend/.env" || grep -q "DATABASE_URL=sqlite" "$PROJECT_DIR/backend/.env"; then
+            echo "DATABASE_URL=sqlite:///%kernel.project_dir%/data/urls.json" >> "$PROJECT_DIR/backend/.env"
+        fi
+        
+        log "Configuration backend mise à jour"
+    fi
+    
+    # Frontend - Configuration de base
+    if [ -f "$PROJECT_DIR/.env.production" ]; then
+        # Configurer l'URL de l'API
+        if ! grep -q "VITE_API_URL" "$PROJECT_DIR/.env.production"; then
+            echo "VITE_API_URL=https://dlpz.fr" >> "$PROJECT_DIR/.env.production"
+        fi
+        
+        log "Configuration frontend mise à jour"
+    fi
+    
+    # Configurer les permissions des fichiers .env
+    log "Configuration des permissions des fichiers .env..."
+    sudo chown www-data:www-data "$PROJECT_DIR/backend/.env" 2>/dev/null || true
+    sudo chown www-data:www-data "$PROJECT_DIR/.env.production" 2>/dev/null || true
+    sudo chmod 644 "$PROJECT_DIR/backend/.env" 2>/dev/null || true
+    sudo chmod 644 "$PROJECT_DIR/.env.production" 2>/dev/null || true
+    
+    # Rebuild du frontend avec la nouvelle configuration
+    log "Rebuild du frontend avec la nouvelle configuration..."
+    cd "$PROJECT_DIR"
+    sudo -u www-data npm run build --cache /tmp/.npm-cache 2>/dev/null || {
+        log "Tentative de build avec cache npm temporaire..."
+        sudo -u www-data npm run build --cache /tmp/.npm-cache
+    }
     
     success "Configuration d'environnement terminée"
 }
