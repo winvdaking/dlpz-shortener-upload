@@ -180,7 +180,10 @@ install_backend_deps() {
     
     cd "$PROJECT_DIR/backend"
     
-    # Installation des dépendances Composer (en tant que www-data pour éviter les problèmes de permissions)
+    # S'assurer que www-data peut écrire dans le répertoire
+    sudo chown -R www-data:www-data "$PROJECT_DIR"
+    
+    # Installation des dépendances Composer (en tant que www-data)
     if [ "$ENVIRONMENT" = "production" ]; then
         sudo -u www-data composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
     else
@@ -201,6 +204,9 @@ install_frontend_deps() {
     log "Installation des dépendances frontend..."
     
     cd "$PROJECT_DIR"
+    
+    # S'assurer que www-data peut écrire dans le répertoire
+    sudo chown -R www-data:www-data "$PROJECT_DIR"
     
     # Installation des dépendances npm (en tant que www-data)
     sudo -u www-data npm ci
@@ -233,6 +239,9 @@ build_frontend() {
     
     cd "$PROJECT_DIR"
     
+    # S'assurer que www-data peut écrire dans le répertoire
+    sudo chown -R www-data:www-data "$PROJECT_DIR"
+    
     # Build en tant que www-data
     sudo -u www-data npm run build
     
@@ -244,16 +253,16 @@ setup_permissions() {
     log "Configuration des permissions..."
     
     # Propriétaire
-    chown -R www-data:www-data "$PROJECT_DIR"
+    sudo chown -R www-data:www-data "$PROJECT_DIR"
     
     # Permissions
-    find "$PROJECT_DIR" -type d -exec chmod 755 {} \;
-    find "$PROJECT_DIR" -type f -exec chmod 644 {} \;
+    sudo find "$PROJECT_DIR" -type d -exec chmod 755 {} \;
+    sudo find "$PROJECT_DIR" -type f -exec chmod 644 {} \;
     
     # Permissions spéciales
-    chmod 755 "$PROJECT_DIR/backend/bin/console"
-    chmod -R 777 "$PROJECT_DIR/backend/var"
-    chmod -R 777 "$PROJECT_DIR/backend/data"
+    sudo chmod 755 "$PROJECT_DIR/backend/bin/console"
+    sudo chmod -R 777 "$PROJECT_DIR/backend/var"
+    sudo chmod -R 777 "$PROJECT_DIR/backend/data"
     
     success "Permissions configurées"
 }
