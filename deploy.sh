@@ -163,20 +163,14 @@ backup_current() {
     fi
 }
 
-# Clonage/mise à jour du code
-update_code() {
-    log "Mise à jour du code source..."
+# Vérification du code source
+check_code() {
+    log "Vérification du code source..."
     
-    if [ -d "$PROJECT_DIR/.git" ]; then
-        # Mise à jour d'un dépôt existant
-        cd "$PROJECT_DIR"
-        git fetch origin
-        git reset --hard origin/main
-        success "Code mis à jour via Git"
+    if [ -d "$PROJECT_DIR" ] && [ "$(ls -A $PROJECT_DIR)" ]; then
+        success "Code source trouvé dans $PROJECT_DIR"
     else
-        # Clonage initial
-        git clone https://github.com/winvdaking/dlpz-shortener.git "$PROJECT_DIR"
-        success "Code cloné depuis Git"
+        error "Code source non trouvé dans $PROJECT_DIR. Veuillez d'abord cloner le dépôt."
     fi
 }
 
@@ -362,7 +356,7 @@ main() {
         check_prerequisites
         create_directories
         backup_current
-        update_code
+        check_code
         install_backend_deps
         install_frontend_deps
         setup_environment
