@@ -208,14 +208,20 @@ install_frontend_deps() {
     # Corriger le cache npm si nécessaire
     if [ -d "/var/www/.npm" ]; then
         log "Correction du cache npm..."
-        sudo chown -R 33:33 "/var/www/.npm" 2>/dev/null || true
+        WWW_DATA_UID=$(id -u www-data)
+        WWW_DATA_GID=$(id -g www-data)
+        sudo chown -R $WWW_DATA_UID:$WWW_DATA_GID "/var/www/.npm" 2>/dev/null || true
     fi
     
     # S'assurer que www-data peut écrire dans le répertoire
     sudo chown -R www-data:www-data "$PROJECT_DIR"
     
     # Installation des dépendances npm (en tant que www-data)
-    sudo -u www-data npm ci
+    # Utiliser un cache npm temporaire si le cache principal pose problème
+    sudo -u www-data npm ci --cache /tmp/.npm-cache 2>/dev/null || {
+        log "Tentative avec cache npm temporaire..."
+        sudo -u www-data npm ci --cache /tmp/.npm-cache --no-optional
+    }
     
     success "Dépendances frontend installées"
 }
@@ -248,14 +254,20 @@ build_frontend() {
     # Corriger le cache npm si nécessaire
     if [ -d "/var/www/.npm" ]; then
         log "Correction du cache npm..."
-        sudo chown -R 33:33 "/var/www/.npm" 2>/dev/null || true
+        WWW_DATA_UID=$(id -u www-data)
+        WWW_DATA_GID=$(id -g www-data)
+        sudo chown -R $WWW_DATA_UID:$WWW_DATA_GID "/var/www/.npm" 2>/dev/null || true
     fi
     
     # S'assurer que www-data peut écrire dans le répertoire
     sudo chown -R www-data:www-data "$PROJECT_DIR"
     
     # Build en tant que www-data
-    sudo -u www-data npm run build
+    # Utiliser un cache npm temporaire si le cache principal pose problème
+    sudo -u www-data npm run build --cache /tmp/.npm-cache 2>/dev/null || {
+        log "Tentative de build avec cache npm temporaire..."
+        sudo -u www-data npm run build --cache /tmp/.npm-cache
+    }
     
     success "Frontend buildé"
 }
