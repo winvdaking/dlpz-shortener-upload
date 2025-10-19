@@ -355,8 +355,15 @@ setup_permissions() {
 setup_nginx() {
     log "Configuration Nginx..."
     
+    # Détecter la version PHP installée
+    PHP_VERSION=$(php -v | head -n1 | cut -d' ' -f2 | cut -d'.' -f1,2)
+    
     # Copier la configuration
     cp "$PROJECT_DIR/nginx/dlpz.fr.conf" "/etc/nginx/sites-available/dlpz.fr"
+    
+    # Corriger la version PHP dans la configuration Nginx
+    log "Correction de la version PHP dans Nginx (version détectée: $PHP_VERSION)..."
+    sed -i "s/php8\.1-fpm/php${PHP_VERSION}-fpm/g" "/etc/nginx/sites-available/dlpz.fr"
     
     # Activer le site
     ln -sf "/etc/nginx/sites-available/dlpz.fr" "/etc/nginx/sites-enabled/"
@@ -367,7 +374,7 @@ setup_nginx() {
     # Recharger Nginx
     systemctl reload nginx
     
-    success "Nginx configuré et rechargé"
+    success "Nginx configuré et rechargé (PHP $PHP_VERSION)"
 }
 
 # Configuration PHP-FPM
