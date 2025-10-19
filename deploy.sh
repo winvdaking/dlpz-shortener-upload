@@ -205,6 +205,12 @@ install_frontend_deps() {
     
     cd "$PROJECT_DIR"
     
+    # Corriger le cache npm si nécessaire
+    if [ -d "/var/www/.npm" ]; then
+        log "Correction du cache npm..."
+        sudo chown -R 33:33 "/var/www/.npm" 2>/dev/null || true
+    fi
+    
     # S'assurer que www-data peut écrire dans le répertoire
     sudo chown -R www-data:www-data "$PROJECT_DIR"
     
@@ -238,6 +244,12 @@ build_frontend() {
     log "Build du frontend..."
     
     cd "$PROJECT_DIR"
+    
+    # Corriger le cache npm si nécessaire
+    if [ -d "/var/www/.npm" ]; then
+        log "Correction du cache npm..."
+        sudo chown -R 33:33 "/var/www/.npm" 2>/dev/null || true
+    fi
     
     # S'assurer que www-data peut écrire dans le répertoire
     sudo chown -R www-data:www-data "$PROJECT_DIR"
